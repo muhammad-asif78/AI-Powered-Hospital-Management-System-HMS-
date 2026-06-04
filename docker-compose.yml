@@ -1,0 +1,117 @@
+# ============================================
+# Linear Health HMS — Docker Compose
+# All services in a single composite stack
+# ============================================
+
+services:
+  # ──────────────── PostgreSQL Database ────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: lh-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-linearhealth}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-linearhealth_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-hospital_management}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linearhealth -d hospital_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────── Redis (Cache + Message Broker) ────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lh-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ──────────────── FastAPI Backend ────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lh-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ──────────────── Celery Worker ────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    container_name: lh-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ──────────────── React Frontend ────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Use relative /api path — the browser calls localhost:3000/api
+        # which the Express server proxies to the FastAPI backend.
+        # This avoids the browser trying to resolve the Docker-internal
+        # 'backend' hostname directly (which it cannot do).
+        VITE_API_BASE_URL: /api
+        VITE_WS_BASE_URL: ""
+    container_name: lh-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Runtime: tells the Express proxy where the FastAPI backend is
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+
+  # ──────────────── LiveKit Voice Agent ────────────────
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: lh-agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      BACKEND_URL: http://backend:8000
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:

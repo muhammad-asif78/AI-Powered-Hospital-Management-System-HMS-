@@ -1,0 +1,43 @@
+# Virtual Environments & Python cache
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Local Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+secrets.py
+.secrets*
+credentials*.json
+service-account*.json
+
+# Frontend Build & Dependencies
+node_modules/
+dist/
+build/
+out/
+.next/
+*.log
+
+# Databases & Local Storage
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificates, Keys, and Security Assets
+*.pem
+*.key
+*.pub
+*.crt
+*.der
+*.p12
+*.pfx
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+auth_token*
+jwt_secret*

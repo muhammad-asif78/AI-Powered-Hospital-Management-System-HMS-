@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+/* ─── Custom Keyframes ──────────────────────────────────────────────── */
+
+@keyframes orb-breathe {
+  0%, 100% { transform: scale(1);   opacity: 0.7; }
+  50%       { transform: scale(1.08); opacity: 1;   }
+}
+
+@keyframes orb-pulse-ring {
+  0%   { transform: scale(0.95); opacity: 0.5; }
+  70%  { transform: scale(1.15); opacity: 0;   }
+  100% { transform: scale(0.95); opacity: 0;   }
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes rotate-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg);   }
+}
+
+@keyframes orb-listening {
+  0%, 100% { box-shadow: 0 0 40px 8px rgba(16,185,129,0.35), 0 0 80px 20px rgba(16,185,129,0.15); }
+  50%       { box-shadow: 0 0 60px 16px rgba(16,185,129,0.55), 0 0 120px 40px rgba(16,185,129,0.2); }
+}
+
+@keyframes orb-responding {
+  0%, 100% { box-shadow: 0 0 40px 8px rgba(6,182,212,0.4), 0 0 80px 20px rgba(139,92,246,0.2); }
+  50%       { box-shadow: 0 0 70px 18px rgba(6,182,212,0.6), 0 0 130px 45px rgba(139,92,246,0.3); }
+}
+
+@keyframes orb-thinking {
+  0%, 100% { box-shadow: 0 0 40px 8px rgba(99,102,241,0.4), 0 0 80px 20px rgba(147,51,234,0.2); }
+  50%       { box-shadow: 0 0 65px 16px rgba(99,102,241,0.6), 0 0 120px 40px rgba(147,51,234,0.3); }
+}
+
+@keyframes orb-idle {
+  0%, 100% { box-shadow: 0 0 30px 5px rgba(100,116,139,0.2), 0 0 60px 15px rgba(100,116,139,0.08); }
+  50%       { box-shadow: 0 0 40px 8px rgba(100,116,139,0.3), 0 0 80px 20px rgba(100,116,139,0.12); }
+}
+
+@keyframes orb-error {
+  0%, 100% { box-shadow: 0 0 40px 8px rgba(244,63,94,0.4), 0 0 80px 20px rgba(244,63,94,0.15); }
+  50%       { box-shadow: 0 0 65px 16px rgba(244,63,94,0.6), 0 0 120px 40px rgba(244,63,94,0.2); }
+}
+
+@keyframes waveform-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1);   }
+}
+
+@keyframes chat-slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);      opacity: 1; }
+}
+
+@keyframes chat-slide-out {
+  from { transform: translateX(0);      opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0);    opacity: 0.4; }
+  40%            { transform: translateY(-6px); opacity: 1;   }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes ambient-drift-1 {
+  0%, 100% { transform: translate(0, 0)   scale(1);    }
+  33%       { transform: translate(60px, -40px) scale(1.1); }
+  66%       { transform: translate(-40px, 30px) scale(0.95); }
+}
+
+@keyframes ambient-drift-2 {
+  0%, 100% { transform: translate(0, 0)    scale(1);    }
+  33%       { transform: translate(-70px, 50px) scale(1.05); }
+  66%       { transform: translate(50px, -30px) scale(1.1); }
+}
+
+/* ─── Orb State Classes ─────────────────────────────────────────────── */
+
+.orb-idle      { animation: orb-idle      3s ease-in-out infinite; }
+.orb-listening { animation: orb-listening 1.4s ease-in-out infinite; }
+.orb-thinking  { animation: orb-thinking  1.8s ease-in-out infinite; }
+.orb-responding{ animation: orb-responding 1.2s ease-in-out infinite; }
+.orb-error     { animation: orb-error     1s ease-in-out infinite; }
+
+/* ─── Streaming Cursor ──────────────────────────────────────────────── */
+.cursor-blink { animation: cursor-blink 0.9s step-end infinite; }
+
+/* ─── Dot Bounce ────────────────────────────────────────────────────── */
+.dot-bounce-1 { animation: dot-bounce 1.1s ease-in-out infinite 0ms; }
+.dot-bounce-2 { animation: dot-bounce 1.1s ease-in-out infinite 160ms; }
+.dot-bounce-3 { animation: dot-bounce 1.1s ease-in-out infinite 320ms; }
+
+/* ─── Slow spin ─────────────────────────────────────────────────────── */
+.animate-slow-spin { animation: spin-slow 3s linear infinite; }
+
+/* ─── Slide-up entrance ─────────────────────────────────────────────── */
+.animate-slide-up { animation: fade-in-up 0.5s ease-out both; }
+
+/* ─── Fade-in for messages ──────────────────────────────────────────── */
+.animate-fade-in { animation: fade-in-up 0.35s ease-out both; }
+
+/* ─── Glassmorphism chat bubble styles ──────────────────────────────── */
+.bubble-ai {
+  background: rgba(8, 145, 178, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+.bubble-user {
+  background: rgba(99, 102, 241, 0.10);
+  border: 1px solid rgba(139, 92, 246, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+/* ─── Custom Scrollbar ──────────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar       { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.55); }
+
+/* ─── Status pill ───────────────────────────────────────────────────── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(161,161,170);
+  background: rgba(24,24,27,0.7);
+  border: 1px solid rgba(63,63,70,0.6);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  backdrop-filter: blur(8px);
+}
+
+/* ─── Skip-link ─────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 4px;
+  z-index: 9999;
+  background: #0ea5e9;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.skip-link:focus { left: 8px; }
+
+/* ─── Waveform bars ─────────────────────────────────────────────────── */
+.waveform-bar {
+  transform-origin: bottom;
+  animation: waveform-bar 0.8s ease-in-out infinite;
+}
+
+/* ─── Shake animation for errors ────────────────────────────────────── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px); }
+}
+.animate-shake { animation: shake 0.5s ease-in-out; }
+
+/* ─── Gradient text shimmer ─────────────────────────────────────────── */
+.gradient-text-shimmer {
+  background: linear-gradient(90deg, #00f2fe, #a855f7, #f0abfc, #00f2fe);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3.5s linear infinite;
+}

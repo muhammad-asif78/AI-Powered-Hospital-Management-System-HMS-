@@ -1,0 +1,6 @@
+{
+  "name": "Hospital Management System",
+  "description": "A comprehensive clinical and administrative hospital management workspace featuring real-time dashboards, patient triage, appointment scheduling, bed allocation grids, financial invoicing, and an AI clinical symptom router.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
