@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🏥 Linear Health — AI-Powered Hospital Management System (HMS)
 
 Linear Health is an enterprise-grade, distributed SaaS platform designed to modernize healthcare operations. The system pairs a high-performance **React + Tailwind** administration dashboard with a **WebRTC-based LiveKit AI Voice receptionist (Sarah)** and an asynchronous **FastAPI + Celery** pipeline for automatic medical document routing, insurance prior authorizations, and clinical telemetry.
