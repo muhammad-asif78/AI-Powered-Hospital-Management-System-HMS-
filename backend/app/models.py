@@ -129,6 +129,8 @@ class Doctor(Base):
     email = Column(String(255), unique=True, index=True)
     is_accepting_patients = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    available_timings = Column(String(255), nullable=True)
+    fees = Column(Float, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="doctor_profile")

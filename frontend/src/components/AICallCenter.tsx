@@ -126,11 +126,11 @@ function WaveformBars({ active, color = '#22d3ee' }: { active: boolean; color?: 
           className="waveform-bar rounded-full"
           style={{
             width: 3,
-            height: active ? `${12 + (i % 3) * 8}px` : '4px',
+            height: active ? `${12 + (i % 3) * 8}px` : '0px',
             background: color,
             animationDelay: `${d}ms`,
             animationDuration: active ? `${0.55 + (i % 3) * 0.15}s` : '0s',
-            opacity: active ? 0.9 : 0.3,
+            opacity: active ? 0.9 : 0,
             transition: 'height 0.4s ease, opacity 0.4s ease',
           }}
         />
@@ -418,10 +418,12 @@ function GlassChatPanel({
   agentOnline: boolean;
   liveStats: { patients?: number; doctors?: number } | null;
 }) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isOpen && containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
   }, [messages, isOpen]);
 
   return (
@@ -495,6 +497,7 @@ function GlassChatPanel({
 
         {/* Message stream */}
         <div
+          ref={containerRef}
           id="call-transcript"
           role="log"
           aria-live="polite"
@@ -523,8 +526,6 @@ function GlassChatPanel({
               callState={callState}
             />
           ))}
-
-          <div ref={bottomRef} aria-hidden />
         </div>
 
         {/* Footer gradient fade */}
@@ -654,10 +655,15 @@ function VoiceOrb({
           />
 
           {/* State icon */}
-          <div className="relative z-10 flex flex-col items-center gap-2">
+          <div className="relative z-10 flex flex-col items-center gap-1.5">
             <CentreOrbIcon state={orbState} />
             <WaveformBars active={isActive} color={orbState === 'listening' ? '#34d399' : '#22d3ee'} />
-            <span className="text-[9px] font-bold tracking-[0.2em] uppercase gradient-text-shimmer mt-1">
+            {callState === 'connected' && (
+              <span className="text-xs font-bold tracking-widest font-mono text-cyan-400 mt-0.5 animate-pulse">
+                {fmt(callDuration)}
+              </span>
+            )}
+            <span className="text-[9px] font-bold tracking-[0.2em] uppercase gradient-text-shimmer">
               AI VOICE ORB
             </span>
           </div>
@@ -732,22 +738,7 @@ function VoiceOrb({
         </p>
       </div>
 
-      {/* ── Call duration badge ───────────────────────────────── */}
-      {callState === 'connected' && (
-        <div
-          className="
-            absolute -top-14
-            bg-slate-900/80 border border-slate-700/50
-            backdrop-blur-md rounded-xl
-            px-5 py-1.5
-            text-white text-sm font-bold tracking-widest font-mono
-            shadow-lg
-          "
-          aria-live="polite" aria-atomic
-        >
-          {fmt(callDuration)}
-        </div>
-      )}
+
 
       {/* ── Error badge ───────────────────────────────────────── */}
       {error && (
@@ -1144,12 +1135,24 @@ export default function AICallCenter() {
           { id: Date.now(), role: 'system', text: 'AI Receptionist is now active.' },
         ]);
         setCallState('connected');
+        setAgentOnline(true);
         advanceOrb('connected', 'none');
         if (!timerRef.current) timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
       });
 
+      room.on(RoomEvent.ParticipantDisconnected, (participant: any) => {
+        if (participant.identity.toLowerCase().includes('agent')) {
+          setAgentOnline(false);
+          setTranscript(prev => [
+            ...prev,
+            { id: Date.now(), role: 'system', text: 'AI Receptionist has left the room.' },
+          ]);
+        }
+      });
+
       room.on(RoomEvent.Disconnected, () => {
         setCallState('ended');
+        setAgentOnline(false);
         advanceOrb('ended');
         clearInterval(timerRef.current);
         connectingRef.current = false;
@@ -1176,6 +1179,7 @@ export default function AICallCenter() {
       );
       if (hasAgent) {
         setCallState('connected');
+        setAgentOnline(true);
         advanceOrb('connected', 'none');
         if (!timerRef.current) timerRef.current = setInterval(() => setCallDuration(d => d + 1), 1000);
       } else {
@@ -1197,6 +1201,7 @@ export default function AICallCenter() {
     audioElemsRef.current = [];
     if (roomRef.current) { await roomRef.current.disconnect(); roomRef.current = null; }
     setCallState('ended');
+    setAgentOnline(false);
     advanceOrb('ended');
   }, [advanceOrb]);
 

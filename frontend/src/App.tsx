@@ -51,6 +51,7 @@ import Referrals from "./components/Referrals";
 import PriorAuth from "./components/PriorAuth";
 import AICallCenter from "./components/AICallCenter";
 import Login from "./components/Login";
+import LedgerChatWidget from "./components/LedgerChatWidget";
 import { api } from "./api";
 
 export default function App() {
@@ -116,40 +117,66 @@ export default function App() {
   }, [invoices]);
 
   // Connect Database to Frontend (Patients and Doctors)
+  // Connect Database to Frontend (Patients, Doctors, and Appointments)
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    api.getPatients().then((data) => {
-      if (data && data.length > 0) {
-        setPatients(data.map((p: any) => ({
-          id: String(p.id),
-          name: p.first_name + " " + p.last_name,
-          dob: p.date_of_birth,
-          gender: p.gender || "Other",
-          phone: p.phone || "",
-          email: p.email || "",
-          insurance: "Unknown",
-          emergencyContact: { name: "", phone: "", relationship: "" },
-          medicalHistory: "None",
-          allergies: "None reported",
-          status: PatientStatus.OUTPATIENT
-        })));
-      }
-    }).catch(console.error);
+    const loadData = () => {
+      api.getPatients().then((data) => {
+        if (data && data.length > 0) {
+          setPatients(data.map((p: any) => ({
+            id: String(p.id),
+            name: p.first_name + " " + p.last_name,
+            dob: p.date_of_birth,
+            gender: p.gender || "Other",
+            phone: p.phone || "",
+            email: p.email || "",
+            insurance: "Unknown",
+            emergencyContact: { name: "", phone: "", relationship: "" },
+            medicalHistory: "None",
+            allergies: "None reported",
+            status: PatientStatus.OUTPATIENT
+          })));
+        }
+      }).catch(console.error);
 
-    api.getDoctors().then((data) => {
-      if (data && data.length > 0) {
-        setDoctors(data.map((d: any) => ({
-          id: String(d.id),
-          name: "Dr. " + d.first_name + " " + d.last_name,
-          specialty: d.specialty as any,
-          status: StaffStatus.ON_DUTY,
-          email: d.email || "",
-          phone: d.phone || "",
-          room: "General"
-        })));
-      }
-    }).catch(console.error);
+      api.getDoctors().then((data) => {
+        if (data && data.length > 0) {
+          setDoctors(data.map((d: any) => ({
+            id: String(d.id),
+            name: "Dr. " + d.first_name + " " + d.last_name,
+            specialty: d.specialty as any,
+            status: StaffStatus.ON_DUTY,
+            email: d.email || "",
+            phone: d.phone || "",
+            room: "General"
+          })));
+        }
+      }).catch(console.error);
+
+      api.getAppointments().then((data) => {
+        if (data && data.length > 0) {
+          setAppointments(data.map((a: any) => ({
+            id: String(a.id),
+            patientId: String(a.patient_id),
+            doctorId: String(a.doctor_id),
+            date: a.appointment_date.split("T")[0],
+            time: a.appointment_date.split("T")[1].substring(0, 5),
+            reason: a.reason || "",
+            urgency: (a.notes === "Critical" || a.notes === "Urgent" || a.notes === "Routine")
+              ? a.notes
+              : (a.reason?.toLowerCase().includes("chest") || a.reason?.toLowerCase().includes("heart") || a.reason?.toLowerCase().includes("severe") || a.reason?.toLowerCase().includes("pain"))
+                ? "Urgent"
+                : "Routine",
+            status: a.status as any
+          })));
+        }
+      }).catch(console.error);
+    };
+
+    loadData();
+    const interval = setInterval(loadData, 4000);
+    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   // CLINICAL HANDLERS & OPERATIONS
@@ -171,14 +198,32 @@ export default function App() {
 
   const handleAddAppointment = (apt: Appointment) => {
     setAppointments([apt, ...appointments]);
+    api.createAppointment({
+      patient_id: parseInt(apt.patientId, 10),
+      doctor_id: parseInt(apt.doctorId, 10),
+      appointment_date: `${apt.date}T${apt.time}:00`,
+      duration_minutes: 30,
+      reason: apt.reason,
+      notes: apt.urgency
+    }).catch(console.error);
   };
 
   const handleUpdateAppointment = (updated: Appointment) => {
     setAppointments(appointments.map(a => a.id === updated.id ? updated : a));
+    if (!updated.id.startsWith("apt-")) {
+      api.updateAppointment(updated.id, {
+        status: updated.status
+      }).catch(console.error);
+    }
   };
 
   const handleCancelAppointment = (aptId: string) => {
     setAppointments(appointments.map(a => a.id === aptId ? { ...a, status: AppointmentStatus.CANCELED } : a));
+    if (!aptId.startsWith("apt-")) {
+      api.updateAppointment(aptId, {
+        status: AppointmentStatus.CANCELED
+      }).catch(console.error);
+    }
   };
 
   const handleAddInvoice = (inv: Invoice) => {
@@ -374,11 +419,7 @@ export default function App() {
           </nav>
         </div>
 
-        {/* Support block */}
-        <div id="sidebar-footer" className="bg-zinc-850 p-3.5 rounded-xl text-[10px] leading-relaxed text-zinc-400 space-y-1">
-          <p className="font-bold text-zinc-300">AI HMS</p>
-          <p>Audit the stack production level and test every endpoint and button functionality.</p>
-        </div>
+
       </aside>
 
       {/* 2. MOBILE HEADER & NAVIGATION */}
@@ -518,6 +559,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      <LedgerChatWidget doctors={doctors} />
     </div>
   );
 }

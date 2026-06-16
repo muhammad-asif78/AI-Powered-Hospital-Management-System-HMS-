@@ -44,18 +44,29 @@ async def get_inbound(referral_id: int, db: AsyncSession = Depends(get_db), _=De
 
 @router.post("/inbound", response_model=InboundReferralResponse, status_code=201)
 async def create_inbound(data: InboundReferralCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    ref = InboundReferral(**data.model_dump())
+    from sqlalchemy.exc import IntegrityError
+    try:
+        ref = InboundReferral(**data.model_dump())
 
-    # If raw document text is provided, use Groq AI to parse it
-    if data.raw_document_text:
-        ref.status = ReferralStatus.processing
-        ai_data = await parse_referral_document(data.raw_document_text)
-        ref.ai_extracted_data = ai_data
+        # If raw document text is provided, use Groq AI to parse it
+        if data.raw_document_text:
+            ref.status = ReferralStatus.processing
+            ai_data = await parse_referral_document(data.raw_document_text)
+            ref.ai_extracted_data = ai_data
 
-    db.add(ref)
-    await db.flush()
-    await db.refresh(ref)
-    return ref
+        db.add(ref)
+        await db.flush()
+        await db.refresh(ref)
+        return ref
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Patient ID. Please ensure the patient exists in the system."
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/inbound/{referral_id}", response_model=InboundReferralResponse)
@@ -119,11 +130,22 @@ async def get_outbound(referral_id: int, db: AsyncSession = Depends(get_db), _=D
 
 @router.post("/outbound", response_model=OutboundReferralResponse, status_code=201)
 async def create_outbound(data: OutboundReferralCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    ref = OutboundReferral(**data.model_dump())
-    db.add(ref)
-    await db.flush()
-    await db.refresh(ref)
-    return ref
+    from sqlalchemy.exc import IntegrityError
+    try:
+        ref = OutboundReferral(**data.model_dump())
+        db.add(ref)
+        await db.flush()
+        await db.refresh(ref)
+        return ref
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Patient ID or Referring Doctor ID. Please ensure they exist in the system."
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/outbound/{referral_id}", response_model=OutboundReferralResponse)

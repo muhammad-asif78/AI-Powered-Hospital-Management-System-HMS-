@@ -49,9 +49,10 @@ async def seed_data(session: AsyncSession):
     doctors = doc_result.scalars().all()
     if not doctors:
         doctors = [
-            Doctor(first_name="Arthur", last_name="Conan", specialty="Cardiology", license_number="LIC-12345", phone="555-0101", email="conan@linearhealth.com", is_accepting_patients=True),
-            Doctor(first_name="Sarah", last_name="Wilson", specialty="Neurology", license_number="LIC-67890", phone="555-0102", email="wilson@linearhealth.com", is_accepting_patients=True),
-            Doctor(first_name="Gregory", last_name="House", specialty="Infectious Diseases", license_number="LIC-55555", phone="555-0103", email="house@linearhealth.com", is_accepting_patients=True)
+            Doctor(first_name="Arthur", last_name="Conan", specialty="Cardiology", license_number="LIC-12345", phone="555-0101", email="conan@linearhealth.com", is_accepting_patients=True, available_timings="Monday to Friday, 9:00 AM - 5:00 PM", fees=150.0),
+            Doctor(first_name="Sarah", last_name="Wilson", specialty="Neurology", license_number="LIC-67890", phone="555-0102", email="wilson@linearhealth.com", is_accepting_patients=True, available_timings="Tuesday and Thursday, 10:00 AM - 4:00 PM", fees=200.0),
+            Doctor(first_name="Gregory", last_name="House", specialty="Infectious Diseases", license_number="LIC-55555", phone="555-0103", email="house@linearhealth.com", is_accepting_patients=True, available_timings="Wednesdays, 1:00 PM - 5:00 PM", fees=300.0),
+            Doctor(first_name="Arthur", last_name="Dent", specialty="General Medicine", license_number="LIC-44444", phone="555-0104", email="dent@linearhealth.com", is_accepting_patients=True, available_timings="Monday to Friday, 8:00 AM - 4:00 PM", fees=100.0)
         ]
         session.add_all(doctors)
         await session.flush()
@@ -88,6 +89,17 @@ async def seed_data(session: AsyncSession):
             InboundReferral(patient_id=patients[1].id, referring_provider_name="Dr. Eric Foreman", referring_provider_npi="1029384756", referring_facility="Mercy Hospital", referral_date=date.today() - timedelta(days=2), reason="Persistent neurological aura", status=ReferralStatus.accepted, insurance_verified=True)
         ]
         session.add_all(referrals)
+
+    # 5. Seed Insurance Providers
+    from app.models import InsuranceProvider
+    ins_result = await session.execute(select(InsuranceProvider))
+    existing_ins = ins_result.scalars().all()
+    if not existing_ins:
+        insurances = [
+            InsuranceProvider(id=1, name="Blue Cross Blue Shield", plan_type="PPO", contact_phone="555-0301", contact_email="bcbs@insurance.com", is_active=True),
+            InsuranceProvider(id=2, name="Aetna", plan_type="HMO", contact_phone="555-0302", contact_email="aetna@insurance.com", is_active=True)
+        ]
+        session.add_all(insurances)
 
 
 async def init_db():

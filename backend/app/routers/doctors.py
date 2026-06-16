@@ -17,12 +17,37 @@ async def list_doctors(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     specialty: Optional[str] = None,
+    search: Optional[str] = None,
+    name: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
     query = select(Doctor).offset(skip).limit(limit).order_by(Doctor.last_name)
     if specialty:
-        query = query.where(Doctor.specialty.ilike(f"%{specialty}%"))
+        spec_lower = specialty.lower()
+        if "cardi" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%Cardiology%"))
+        elif "neur" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%Neurology%"))
+        elif "infect" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%Infectious%"))
+        elif "pedia" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%Pediatric%"))
+        elif "ortho" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%Orthopedic%"))
+        elif "general" in spec_lower or "physician" in spec_lower or "medicine" in spec_lower or "gp" == spec_lower or "checkup" in spec_lower:
+            query = query.where(Doctor.specialty.ilike("%General Medicine%"))
+        else:
+            query = query.where(Doctor.specialty.ilike(f"%{specialty}%"))
+    
+    search_term = name or search
+    if search_term:
+        term = search_term.strip()
+        query = query.where(
+            Doctor.first_name.ilike(f"%{term}%")
+            | Doctor.last_name.ilike(f"%{term}%")
+            | (Doctor.first_name + " " + Doctor.last_name).ilike(f"%{term}%")
+        )
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -36,6 +61,7 @@ async def get_doctor(doctor_id: int, db: AsyncSession = Depends(get_db), _=Depen
     return doctor
 
 
+@router.post("/add", response_model=DoctorResponse, status_code=201)
 @router.post("/", response_model=DoctorResponse, status_code=201)
 async def create_doctor(data: DoctorCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
     existing = await db.execute(select(Doctor).where(Doctor.license_number == data.license_number))

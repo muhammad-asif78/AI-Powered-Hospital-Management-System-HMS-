@@ -98,13 +98,20 @@ export default function Appointments({
   };
 
   const filteredAppointments = appointments.filter(apt => {
-    const patientObj = patients.find(p => p.id === apt.patientId);
-    const doctorObj = doctors.find(d => d.id === apt.doctorId);
+    const patientObj = patients.find(p => String(p.id) === String(apt.patientId));
+    const doctorObj = doctors.find(d => String(d.id) === String(apt.doctorId));
     
+    const patientName = patientObj 
+      ? (patientObj.name || `${(patientObj as any).first_name || ""} ${(patientObj as any).last_name || ""}`.trim()) 
+      : "Unknown Patient";
+    const doctorName = doctorObj 
+      ? (doctorObj.name || `Dr. ${(doctorObj as any).first_name || ""} ${(doctorObj as any).last_name || ""}`.trim()) 
+      : "Unassigned Doctor";
+
     const term = searchTerm.toLowerCase();
     const matchesSearch = 
-      (patientObj?.name.toLowerCase().includes(term) ?? false) || 
-      (doctorObj?.name.toLowerCase().includes(term) ?? false) || 
+      patientName.toLowerCase().includes(term) || 
+      doctorName.toLowerCase().includes(term) || 
       apt.reason.toLowerCase().includes(term);
 
     const matchesUrgency = urgencyFilter === "All" || apt.urgency === urgencyFilter;
@@ -178,8 +185,15 @@ export default function Appointments({
           </div>
         ) : (
           filteredAppointments.map(apt => {
-            const patientObj = patients.find(p => p.id === apt.patientId);
-            const doctorObj = doctors.find(d => d.id === apt.doctorId);
+            const patientObj = patients.find(p => String(p.id) === String(apt.patientId));
+            const doctorObj = doctors.find(d => String(d.id) === String(apt.doctorId));
+
+            const patientName = patientObj 
+              ? (patientObj.name || `${(patientObj as any).first_name || ""} ${(patientObj as any).last_name || ""}`.trim()) 
+              : "Unknown Patient";
+            const doctorName = doctorObj 
+              ? (doctorObj.name || `Dr. ${(doctorObj as any).first_name || ""} ${(doctorObj as any).last_name || ""}`.trim()) 
+              : "Unassigned Doctor";
 
             return (
               <div 
@@ -204,7 +218,7 @@ export default function Appointments({
                       </div>
                       <div>
                         <h3 className="text-xs font-bold text-neutral-900 leading-tight">
-                          {patientObj?.name || "Unknown Patient"}
+                          {patientName}
                         </h3>
                         <p className="text-[9px] text-zinc-400 font-mono mt-0.5">ID: {apt.patientId}</p>
                       </div>
@@ -216,7 +230,7 @@ export default function Appointments({
                       </div>
                       <div>
                         <h4 className="text-xs font-semibold text-zinc-800 leading-tight">
-                          {doctorObj?.name || "Unassigned Doctor"}
+                          {doctorName}
                         </h4>
                         <p className="text-[9px] text-zinc-500 font-medium">{doctorObj?.specialty}</p>
                       </div>
@@ -304,9 +318,12 @@ export default function Appointments({
                     className="w-full border border-zinc-200 p-2.5 rounded-xl bg-white focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                   >
                     <option value="" disabled>Select patient from directory</option>
-                    {patients.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} (ID: {p.id})</option>
-                    ))}
+                    {patients.map(p => {
+                      const pName = p.name || `${(p as any).first_name || ""} ${(p as any).last_name || ""}`.trim();
+                      return (
+                        <option key={p.id} value={p.id}>{pName} (ID: {p.id})</option>
+                      );
+                    })}
                   </select>
                 </div>
 

@@ -44,11 +44,22 @@ async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_db
 
 @router.post("/", response_model=AppointmentResponse, status_code=201)
 async def create_appointment(data: AppointmentCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    appt = Appointment(**data.model_dump())
-    db.add(appt)
-    await db.flush()
-    await db.refresh(appt)
-    return appt
+    from sqlalchemy.exc import IntegrityError
+    try:
+        appt = Appointment(**data.model_dump())
+        db.add(appt)
+        await db.flush()
+        await db.refresh(appt)
+        return appt
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Patient ID or Doctor ID. Please ensure they exist in the system."
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{appointment_id}", response_model=AppointmentResponse)

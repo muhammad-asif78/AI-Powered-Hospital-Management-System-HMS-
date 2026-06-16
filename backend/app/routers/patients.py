@@ -22,10 +22,12 @@ async def list_patients(
 ):
     query = select(Patient).offset(skip).limit(limit).order_by(Patient.created_at.desc())
     if search:
+        search_clean = search.strip()
         query = query.where(
-            Patient.first_name.ilike(f"%{search}%")
-            | Patient.last_name.ilike(f"%{search}%")
-            | Patient.medical_record_number.ilike(f"%{search}%")
+            Patient.first_name.ilike(f"%{search_clean}%")
+            | Patient.last_name.ilike(f"%{search_clean}%")
+            | Patient.medical_record_number.ilike(f"%{search_clean}%")
+            | (Patient.first_name + " " + Patient.last_name).ilike(f"%{search_clean}%")
         )
     result = await db.execute(query)
     return result.scalars().all()
@@ -54,6 +56,14 @@ async def create_patient(data: PatientCreate, db: AsyncSession = Depends(get_db)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Medical record number already exists")
+
+    # Check for duplicate email
+    if data.email:
+        existing_email = await db.execute(
+            select(Patient).where(Patient.email == data.email)
+        )
+        if existing_email.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email already registered")
 
     patient = Patient(**data.model_dump())
     db.add(patient)

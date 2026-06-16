@@ -72,117 +72,7 @@ export default function Dashboard({ doctors, patients, wards, setActiveTab, setS
     percentage: activePatientsCount > 0 ? Math.round((value / activePatientsCount) * 100) : 0
   }));
 
-  // Dynamic logs state populated from live DB endpoints
-  const [clinicalLogs, setClinicalLogs] = useState([]);
-
-  useEffect(() => {
-    let active = true;
-
-    const formatLogTime = (d: Date) => {
-      const now = new Date();
-      const diffMs = now.getTime() - d.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 1) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return `${diffHours}h ago`;
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " " + d.toLocaleDateString();
-    };
-
-    const fetchLogs = async () => {
-      try {
-        const [patientsList, appts, inboundRefs, outboundRefs, priorAuths] = await Promise.all([
-          api.getPatients().catch(() => []),
-          api.getAppointments().catch(() => []),
-          api.getInboundReferrals().catch(() => []),
-          api.getOutboundReferrals().catch(() => []),
-          api.getPriorAuths().catch(() => []),
-        ]);
-
-        if (!active) return;
-
-        const compiled = [];
-
-        // 1. Patient Registrations
-        (patientsList || []).forEach(p => {
-          compiled.push({
-            id: `pat-${p.id}`,
-            timestamp: new Date(p.created_at || Date.now()),
-            type: "admission",
-            text: `Patient ${p.first_name} ${p.last_name} registered successfully. MRN: ${p.medical_record_number}.`,
-            time: formatLogTime(new Date(p.created_at || Date.now()))
-          });
-        });
-
-        // 2. Appointments
-        (appts || []).forEach(a => {
-          const pat = (patientsList || []).find(p => p.id === a.patient_id);
-          const doc = doctors.find(d => d.id === String(a.doctor_id));
-          const patName = pat ? `${pat.first_name} ${pat.last_name}` : `Patient #${a.patient_id}`;
-          const docName = doc ? doc.name : `Doctor #${a.doctor_id}`;
-          compiled.push({
-            id: `apt-${a.id}`,
-            timestamp: new Date(a.created_at || Date.now()),
-            type: "consult",
-            text: `Consult scheduled: Attending ${docName} scheduled to see Patient ${patName} for "${a.reason || 'Routine consult'}" (Duration: ${a.duration_minutes}m).`,
-            time: formatLogTime(new Date(a.created_at || Date.now()))
-          });
-        });
-
-        // 3. Inbound Referrals
-        (inboundRefs || []).forEach(r => {
-          compiled.push({
-            id: `inref-${r.id}`,
-            timestamp: new Date(r.created_at || Date.now()),
-            type: "triage",
-            text: `AI Inbound Referral processed: Referred by ${r.referring_provider_name} from ${r.referring_facility || 'External Clinic'} for "${r.reason}". Status: ${r.status}.`,
-            time: formatLogTime(new Date(r.created_at || Date.now()))
-          });
-        });
-
-        // 4. Outbound Referrals
-        (outboundRefs || []).forEach(r => {
-          const pat = (patientsList || []).find(p => p.id === r.patient_id);
-          const patName = pat ? `${pat.first_name} ${pat.last_name}` : `Patient #${r.patient_id}`;
-          compiled.push({
-            id: `outref-${r.id}`,
-            timestamp: new Date(r.created_at || Date.now()),
-            type: "referral",
-            text: `AI Outbound Referral verified: Patient ${patName} referred to ${r.referred_to_provider} for ${r.referred_to_specialty} at ${r.referred_to_facility || 'St. Jude'}.`,
-            time: formatLogTime(new Date(r.created_at || Date.now()))
-          });
-        });
-
-        // 5. Prior Authorizations
-        (priorAuths || []).forEach(pa => {
-          const pat = (patientsList || []).find(p => p.id === pa.patient_id);
-          const patName = pat ? `${pat.first_name} ${pat.last_name}` : `Patient #${pa.patient_id}`;
-          compiled.push({
-            id: `pa-${pa.id}`,
-            timestamp: new Date(pa.created_at || Date.now()),
-            type: "prior-auth",
-            text: `AI Prior Auth submitted: Procedure ${pa.procedure_code} (${pa.procedure_description}) for ${patName} classified as "${pa.ai_predicted_status || 'pending'}". Status: ${pa.status}.`,
-            time: formatLogTime(new Date(pa.created_at || Date.now()))
-          });
-        });
-
-        // Sort by timestamp descending
-        compiled.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-        setClinicalLogs(compiled.slice(0, 10));
-      } catch (err) {
-        console.error("Error fetching census logs:", err);
-      }
-    };
-
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 3000); // Polling Census Logs every 3 seconds!
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [patients, doctors]);
+  // Census logs removed from dashboard layout - now rendered globally in the overlay chat widget
 
   return (
     <div id="dashboard-tab" className="space-y-6">
@@ -403,11 +293,11 @@ export default function Dashboard({ doctors, patients, wards, setActiveTab, setS
         </div>
       </div>
 
-      {/* Bottom Row - Patients on Admission and Operational logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Bottom Row - Active Inpatient Roster (Spanned full width for clean aesthetics) */}
+      <div className="grid grid-cols-1 gap-6">
         
         {/* Critical Cases Tracker */}
-        <div className="lg:col-span-2 bg-white border border-zinc-200/80 rounded-2xl p-6 space-y-4">
+        <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-semibold text-neutral-900">Active Inpatient Roster</h2>
@@ -476,33 +366,6 @@ export default function Dashboard({ doctors, patients, wards, setActiveTab, setS
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* Live Operational Logs */}
-        <div className="bg-white border border-zinc-200/80 rounded-2xl p-6 space-y-4">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-900">Hospital Ledger Log</h2>
-            <p className="text-xs text-zinc-400">Admissions, departures, consultations, and triage.</p>
-          </div>
-
-          <div className="space-y-4">
-            {clinicalLogs.map(log => (
-              <div key={log.id} className="flex gap-3 text-xs items-start">
-                <div className={`w-1.5 h-1.5 rounded-full mt-1.5 grow-0 shrink-0 ${
-                  log.type === "admission" ? "bg-indigo-600" :
-                  log.type === "triage" ? "bg-amber-500" :
-                  log.type === "consult" ? "bg-emerald-500" :
-                  log.type === "billing" ? "bg-blue-500" :
-                  log.type === "prior-auth" ? "bg-violet-600" :
-                  log.type === "referral" ? "bg-sky-500" : "bg-zinc-400"
-                }`}></div>
-                <div className="flex-1 space-y-0.5">
-                  <p className="text-zinc-700 leading-relaxed text-[11px]">{log.text}</p>
-                  <span className="text-[9px] text-zinc-400 font-medium block">{log.time}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>

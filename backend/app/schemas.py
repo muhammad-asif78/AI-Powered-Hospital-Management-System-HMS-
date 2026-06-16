@@ -135,6 +135,8 @@ class DoctorCreate(BaseModel):
     email: Optional[EmailStr] = None
     is_accepting_patients: bool = True
     user_id: Optional[int] = None
+    available_timings: Optional[str] = None
+    fees: Optional[float] = None
 
 class DoctorUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -143,6 +145,8 @@ class DoctorUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
     is_accepting_patients: Optional[bool] = None
+    available_timings: Optional[str] = None
+    fees: Optional[float] = None
 
 class DoctorResponse(BaseModel):
     id: int
@@ -154,6 +158,8 @@ class DoctorResponse(BaseModel):
     email: Optional[str]
     is_accepting_patients: bool
     created_at: datetime
+    available_timings: Optional[str] = None
+    fees: Optional[float] = None
     class Config:
         from_attributes = True
 
