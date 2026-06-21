@@ -1261,11 +1261,10 @@ export default function AICallCenter() {
         className="
           relative flex flex-col
           bg-[#030712] text-slate-100
-          rounded-2xl overflow-hidden
-          border border-slate-800/50
-          shadow-[0_0_80px_rgba(0,0,0,0.95)]
+          w-full min-h-screen
+          overflow-hidden
         "
-        style={{ minHeight: 'calc(100vh - 140px)', fontFamily: 'var(--font-sans)' }}
+        style={{ fontFamily: 'var(--font-sans)' }}
         role="region"
         aria-label="AI Voice Agent Dashboard"
       >

@@ -379,7 +379,9 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-neutral-800 flex flex-col md:flex-row font-sans">
+    <div className={`min-h-screen text-neutral-800 flex flex-col md:flex-row font-sans transition-colors duration-300 ${
+      activeTab === "callcenter" ? "bg-[#030712]" : "bg-zinc-50"
+    }`}>
       
       {/* 1. SIDEBAR NAVIGATION - DESKTOP */}
       <aside className="hidden md:flex flex-col justify-between w-64 bg-zinc-900 text-zinc-350 shrink-0 border-r border-zinc-805/80 p-5 min-h-screen">
@@ -474,7 +476,14 @@ export default function App() {
       </AnimatePresence>
 
       {/* 4. MAIN VIEWPORT & WORKSPACE */}
-      <main id="main-viewport" className="flex-1 p-4 md:p-8 bg-zinc-50 overflow-y-auto max-w-7xl mx-auto w-full">
+      <main 
+        id="main-viewport" 
+        className={`flex-1 overflow-y-auto transition-all duration-300 ${
+          activeTab === "callcenter"
+            ? "p-0 bg-[#030712] w-full"
+            : "p-4 md:p-8 bg-zinc-50 max-w-7xl mx-auto w-full"
+        }`}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
