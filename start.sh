@@ -8,6 +8,8 @@ export REDIS_URL="redis://localhost:6379/0"
 export CELERY_BROKER_URL="redis://localhost:6379/0"
 export CELERY_RESULT_BACKEND="redis://localhost:6379/1"
 
+export PYTHONPATH="/app/backend:/app:${PYTHONPATH}"
+
 echo "=== Starting Redis ==="
 redis-server --port 6379 --dir /tmp --daemonize yes
 
