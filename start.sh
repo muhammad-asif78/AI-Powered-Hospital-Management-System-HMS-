@@ -13,14 +13,17 @@ redis-server --port 6379 --dir /tmp --daemonize yes
 
 echo "=== Setting up PostgreSQL ==="
 PG_DATA="/tmp/pgdata"
-if [ ! -d "$PG_DATA" ] || [ -z "$(ls -A "$PG_DATA")" ]; then
+mkdir -p "$PG_DATA"
+chown -R postgres:postgres "$PG_DATA"
+
+if [ -z "$(ls -A "$PG_DATA")" ]; then
     echo "Initializing database cluster..."
-    initdb -D "$PG_DATA"
+    su -s /bin/bash postgres -c "export PATH=\"/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:\$PATH\"; initdb -D $PG_DATA"
 fi
 
 echo "Starting PostgreSQL..."
-# Run postgres daemon. Bind to localhost, port 5432, socket directory in /tmp
-postgres -D "$PG_DATA" -h localhost -p 5432 -k /tmp > /tmp/postgres.log 2>&1 &
+# Run postgres daemon as postgres user. Bind to localhost, port 5432, socket directory in /tmp
+su -s /bin/bash postgres -c "export PATH=\"/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:\$PATH\"; postgres -D $PG_DATA -h localhost -p 5432 -k /tmp" > /tmp/postgres.log 2>&1 &
 
 echo "Waiting for PostgreSQL to start..."
 until pg_isready -h localhost -p 5432; do
@@ -29,8 +32,8 @@ done
 echo "PostgreSQL is ready."
 
 echo "Configuring PostgreSQL roles and database..."
-psql -h localhost -p 5432 -d postgres -c "CREATE ROLE linearhealth WITH LOGIN PASSWORD 'linearhealth_secret' SUPERUSER;" || true
-psql -h localhost -p 5432 -d postgres -c "CREATE DATABASE hospital_management OWNER linearhealth;" || true
+su -s /bin/bash postgres -c "export PATH=\"/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:\$PATH\"; psql -h localhost -p 5432 -d postgres -c \"CREATE ROLE linearhealth WITH LOGIN PASSWORD 'linearhealth_secret' SUPERUSER;\"" || true
+su -s /bin/bash postgres -c "export PATH=\"/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:\$PATH\"; psql -h localhost -p 5432 -d postgres -c \"CREATE DATABASE hospital_management OWNER linearhealth;\"" || true
 
 echo "=== Starting Celery Worker ==="
 python -m celery -A worker.celery_app worker --loglevel=info > /tmp/celery.log 2>&1 &
