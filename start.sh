@@ -2,6 +2,7 @@
 set -e
 
 # Overwrite environment variables to point to localhost inside this single container
+export PATH="/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:${PATH}"
 export DATABASE_URL="postgresql+asyncpg://linearhealth:linearhealth_secret@localhost:5432/hospital_management"
 export REDIS_URL="redis://localhost:6379/0"
 export CELERY_BROKER_URL="redis://localhost:6379/0"
