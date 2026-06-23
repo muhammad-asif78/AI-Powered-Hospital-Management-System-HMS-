@@ -7,6 +7,7 @@ Configures CORS, custom middleware, and registers all API routers.
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
@@ -103,3 +104,8 @@ app.include_router(users.router)
 @app.get("/api/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy", "service": settings.APP_NAME}
+
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/docs")
