@@ -23,7 +23,12 @@ async def list_prior_auths(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    query = select(PriorAuthorization).offset(skip).limit(limit).order_by(PriorAuthorization.created_at.desc())
+    query = (
+        select(PriorAuthorization)
+        .offset(skip)
+        .limit(limit)
+        .order_by(PriorAuthorization.created_at.desc())
+    )
     if status:
         query = query.where(PriorAuthorization.status == PriorAuthStatus(status))
     if patient_id:
@@ -33,8 +38,12 @@ async def list_prior_auths(
 
 
 @router.get("/{pa_id}", response_model=PriorAuthResponse)
-async def get_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(select(PriorAuthorization).where(PriorAuthorization.id == pa_id))
+async def get_prior_auth(
+    pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(PriorAuthorization).where(PriorAuthorization.id == pa_id)
+    )
     pa = result.scalar_one_or_none()
     if not pa:
         raise HTTPException(status_code=404, detail="Prior authorization not found")
@@ -42,8 +51,13 @@ async def get_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db), _=Depen
 
 
 @router.post("/", response_model=PriorAuthResponse, status_code=201)
-async def create_prior_auth(data: PriorAuthCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def create_prior_auth(
+    data: PriorAuthCreate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
     from sqlalchemy.exc import IntegrityError
+
     try:
         pa = PriorAuthorization(**data.model_dump())
         db.add(pa)
@@ -53,8 +67,8 @@ async def create_prior_auth(data: PriorAuthCreate, db: AsyncSession = Depends(ge
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
-            status_code=400, 
-            detail="Invalid Patient ID, Doctor ID, or Insurance Provider ID. Please ensure they exist."
+            status_code=400,
+            detail="Invalid Patient ID, Doctor ID, or Insurance Provider ID. Please ensure they exist.",
         )
     except Exception as e:
         await db.rollback()
@@ -63,9 +77,14 @@ async def create_prior_auth(data: PriorAuthCreate, db: AsyncSession = Depends(ge
 
 @router.put("/{pa_id}", response_model=PriorAuthResponse)
 async def update_prior_auth(
-    pa_id: int, data: PriorAuthUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    pa_id: int,
+    data: PriorAuthUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
-    result = await db.execute(select(PriorAuthorization).where(PriorAuthorization.id == pa_id))
+    result = await db.execute(
+        select(PriorAuthorization).where(PriorAuthorization.id == pa_id)
+    )
     pa = result.scalar_one_or_none()
     if not pa:
         raise HTTPException(status_code=404, detail="Prior authorization not found")
@@ -77,9 +96,13 @@ async def update_prior_auth(
 
 
 @router.post("/{pa_id}/classify", response_model=PriorAuthResponse)
-async def ai_classify_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def ai_classify_prior_auth(
+    pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     """Use Groq AI to predict approval likelihood and generate clinical justification."""
-    result = await db.execute(select(PriorAuthorization).where(PriorAuthorization.id == pa_id))
+    result = await db.execute(
+        select(PriorAuthorization).where(PriorAuthorization.id == pa_id)
+    )
     pa = result.scalar_one_or_none()
     if not pa:
         raise HTTPException(status_code=404, detail="Prior authorization not found")
@@ -94,7 +117,12 @@ async def ai_classify_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db),
     pa.ai_predicted_status = str(ai_result.get("predicted_status", "unknown"))
     justification = ai_result.get("generated_justification", "")
     if isinstance(justification, dict):
-        justification = justification.get("text", justification.get("letter", justification.get("content", str(justification))))
+        justification = justification.get(
+            "text",
+            justification.get(
+                "letter", justification.get("content", str(justification))
+            ),
+        )
     pa.ai_generated_justification = str(justification)
     await db.flush()
     await db.refresh(pa)
@@ -102,9 +130,13 @@ async def ai_classify_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db),
 
 
 @router.post("/{pa_id}/submit", response_model=PriorAuthResponse)
-async def submit_prior_auth(pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def submit_prior_auth(
+    pa_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     """Submit a prior authorization for review."""
-    result = await db.execute(select(PriorAuthorization).where(PriorAuthorization.id == pa_id))
+    result = await db.execute(
+        select(PriorAuthorization).where(PriorAuthorization.id == pa_id)
+    )
     pa = result.scalar_one_or_none()
     if not pa:
         raise HTTPException(status_code=404, detail="Prior authorization not found")

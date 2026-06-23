@@ -23,6 +23,7 @@ async_session = async_sessionmaker(
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
+
     pass
 
 
@@ -41,18 +42,66 @@ async def get_db() -> AsyncSession:
 
 async def seed_data(session: AsyncSession):
     """Seed default doctors, patients, appointments, and referrals if not present."""
-    from app.models import Doctor, Patient, Gender, Appointment, AppointmentStatus, InboundReferral, ReferralStatus
+    from app.models import (
+        Doctor,
+        Patient,
+        Gender,
+        Appointment,
+        AppointmentStatus,
+        InboundReferral,
+        ReferralStatus,
+    )
     from datetime import date, datetime, timedelta
-    
+
     # 1. Seed Doctors
     doc_result = await session.execute(select(Doctor))
     doctors = doc_result.scalars().all()
     if not doctors:
         doctors = [
-            Doctor(first_name="Arthur", last_name="Conan", specialty="Cardiology", license_number="LIC-12345", phone="555-0101", email="conan@linearhealth.com", is_accepting_patients=True, available_timings="Monday to Friday, 9:00 AM - 5:00 PM", fees=150.0),
-            Doctor(first_name="Sarah", last_name="Wilson", specialty="Neurology", license_number="LIC-67890", phone="555-0102", email="wilson@linearhealth.com", is_accepting_patients=True, available_timings="Tuesday and Thursday, 10:00 AM - 4:00 PM", fees=200.0),
-            Doctor(first_name="Gregory", last_name="House", specialty="Infectious Diseases", license_number="LIC-55555", phone="555-0103", email="house@linearhealth.com", is_accepting_patients=True, available_timings="Wednesdays, 1:00 PM - 5:00 PM", fees=300.0),
-            Doctor(first_name="Arthur", last_name="Dent", specialty="General Medicine", license_number="LIC-44444", phone="555-0104", email="dent@linearhealth.com", is_accepting_patients=True, available_timings="Monday to Friday, 8:00 AM - 4:00 PM", fees=100.0)
+            Doctor(
+                first_name="Arthur",
+                last_name="Conan",
+                specialty="Cardiology",
+                license_number="LIC-12345",
+                phone="555-0101",
+                email="conan@linearhealth.com",
+                is_accepting_patients=True,
+                available_timings="Monday to Friday, 9:00 AM - 5:00 PM",
+                fees=150.0,
+            ),
+            Doctor(
+                first_name="Sarah",
+                last_name="Wilson",
+                specialty="Neurology",
+                license_number="LIC-67890",
+                phone="555-0102",
+                email="wilson@linearhealth.com",
+                is_accepting_patients=True,
+                available_timings="Tuesday and Thursday, 10:00 AM - 4:00 PM",
+                fees=200.0,
+            ),
+            Doctor(
+                first_name="Gregory",
+                last_name="House",
+                specialty="Infectious Diseases",
+                license_number="LIC-55555",
+                phone="555-0103",
+                email="house@linearhealth.com",
+                is_accepting_patients=True,
+                available_timings="Wednesdays, 1:00 PM - 5:00 PM",
+                fees=300.0,
+            ),
+            Doctor(
+                first_name="Arthur",
+                last_name="Dent",
+                specialty="General Medicine",
+                license_number="LIC-44444",
+                phone="555-0104",
+                email="dent@linearhealth.com",
+                is_accepting_patients=True,
+                available_timings="Monday to Friday, 8:00 AM - 4:00 PM",
+                fees=100.0,
+            ),
         ]
         session.add_all(doctors)
         await session.flush()
@@ -62,9 +111,36 @@ async def seed_data(session: AsyncSession):
     patients = pat_result.scalars().all()
     if not patients:
         patients = [
-            Patient(first_name="John", last_name="Doe", date_of_birth=date(1985, 5, 15), gender=Gender.male, email="john.doe@gmail.com", phone="555-0201", address="123 Main St, Boston MA", medical_record_number="MRN-882910"),
-            Patient(first_name="Jane", last_name="Smith", date_of_birth=date(1990, 8, 20), gender=Gender.female, email="jane.smith@gmail.com", phone="555-0202", address="456 Elm St, New York NY", medical_record_number="MRN-773829"),
-            Patient(first_name="Robert", last_name="Johnson", date_of_birth=date(1972, 12, 10), gender=Gender.male, email="robert.j@gmail.com", phone="555-0203", address="789 Oak Ave, Chicago IL", medical_record_number="MRN-994821")
+            Patient(
+                first_name="John",
+                last_name="Doe",
+                date_of_birth=date(1985, 5, 15),
+                gender=Gender.male,
+                email="john.doe@gmail.com",
+                phone="555-0201",
+                address="123 Main St, Boston MA",
+                medical_record_number="MRN-882910",
+            ),
+            Patient(
+                first_name="Jane",
+                last_name="Smith",
+                date_of_birth=date(1990, 8, 20),
+                gender=Gender.female,
+                email="jane.smith@gmail.com",
+                phone="555-0202",
+                address="456 Elm St, New York NY",
+                medical_record_number="MRN-773829",
+            ),
+            Patient(
+                first_name="Robert",
+                last_name="Johnson",
+                date_of_birth=date(1972, 12, 10),
+                gender=Gender.male,
+                email="robert.j@gmail.com",
+                phone="555-0203",
+                address="789 Oak Ave, Chicago IL",
+                medical_record_number="MRN-994821",
+            ),
         ]
         session.add_all(patients)
         await session.flush()
@@ -74,9 +150,30 @@ async def seed_data(session: AsyncSession):
     existing_appts = appt_result.scalars().all()
     if not existing_appts and doctors and patients:
         appointments = [
-            Appointment(patient_id=patients[0].id, doctor_id=doctors[0].id, appointment_date=datetime.now() + timedelta(hours=2), duration_minutes=30, status=AppointmentStatus.scheduled, reason="Routine cardiovascular follow-up"),
-            Appointment(patient_id=patients[1].id, doctor_id=doctors[1].id, appointment_date=datetime.now() - timedelta(hours=3), duration_minutes=45, status=AppointmentStatus.completed, reason="Migraine headache consultation"),
-            Appointment(patient_id=patients[2].id, doctor_id=doctors[2].id, appointment_date=datetime.now() + timedelta(hours=5), duration_minutes=30, status=AppointmentStatus.scheduled, reason="Unexplained fever evaluation")
+            Appointment(
+                patient_id=patients[0].id,
+                doctor_id=doctors[0].id,
+                appointment_date=datetime.now() + timedelta(hours=2),
+                duration_minutes=30,
+                status=AppointmentStatus.scheduled,
+                reason="Routine cardiovascular follow-up",
+            ),
+            Appointment(
+                patient_id=patients[1].id,
+                doctor_id=doctors[1].id,
+                appointment_date=datetime.now() - timedelta(hours=3),
+                duration_minutes=45,
+                status=AppointmentStatus.completed,
+                reason="Migraine headache consultation",
+            ),
+            Appointment(
+                patient_id=patients[2].id,
+                doctor_id=doctors[2].id,
+                appointment_date=datetime.now() + timedelta(hours=5),
+                duration_minutes=30,
+                status=AppointmentStatus.scheduled,
+                reason="Unexplained fever evaluation",
+            ),
         ]
         session.add_all(appointments)
 
@@ -85,27 +182,60 @@ async def seed_data(session: AsyncSession):
     existing_refs = ref_result.scalars().all()
     if not existing_refs and patients:
         referrals = [
-            InboundReferral(patient_id=patients[0].id, referring_provider_name="Dr. Lisa Cuddy", referring_provider_npi="1982736450", referring_facility="Princeton Plainsboro", referral_date=date.today(), reason="Needs cardiologist review", status=ReferralStatus.pending, insurance_verified=True),
-            InboundReferral(patient_id=patients[1].id, referring_provider_name="Dr. Eric Foreman", referring_provider_npi="1029384756", referring_facility="Mercy Hospital", referral_date=date.today() - timedelta(days=2), reason="Persistent neurological aura", status=ReferralStatus.accepted, insurance_verified=True)
+            InboundReferral(
+                patient_id=patients[0].id,
+                referring_provider_name="Dr. Lisa Cuddy",
+                referring_provider_npi="1982736450",
+                referring_facility="Princeton Plainsboro",
+                referral_date=date.today(),
+                reason="Needs cardiologist review",
+                status=ReferralStatus.pending,
+                insurance_verified=True,
+            ),
+            InboundReferral(
+                patient_id=patients[1].id,
+                referring_provider_name="Dr. Eric Foreman",
+                referring_provider_npi="1029384756",
+                referring_facility="Mercy Hospital",
+                referral_date=date.today() - timedelta(days=2),
+                reason="Persistent neurological aura",
+                status=ReferralStatus.accepted,
+                insurance_verified=True,
+            ),
         ]
         session.add_all(referrals)
 
     # 5. Seed Insurance Providers
     from app.models import InsuranceProvider
+
     ins_result = await session.execute(select(InsuranceProvider))
     existing_ins = ins_result.scalars().all()
     if not existing_ins:
         insurances = [
-            InsuranceProvider(id=1, name="Blue Cross Blue Shield", plan_type="PPO", contact_phone="555-0301", contact_email="bcbs@insurance.com", is_active=True),
-            InsuranceProvider(id=2, name="Aetna", plan_type="HMO", contact_phone="555-0302", contact_email="aetna@insurance.com", is_active=True)
+            InsuranceProvider(
+                id=1,
+                name="Blue Cross Blue Shield",
+                plan_type="PPO",
+                contact_phone="555-0301",
+                contact_email="bcbs@insurance.com",
+                is_active=True,
+            ),
+            InsuranceProvider(
+                id=2,
+                name="Aetna",
+                plan_type="HMO",
+                contact_phone="555-0302",
+                contact_email="aetna@insurance.com",
+                is_active=True,
+            ),
         ]
         session.add_all(insurances)
 
 
 async def init_db():
     """Create all tables and seed default admin user on startup."""
-    import app.models  # Ensure all models are registered on Base.metadata before table creation
-    
+    import app.models  # noqa: F401 — Ensure all models are registered on Base.metadata before table creation
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -113,13 +243,16 @@ async def init_db():
     from app.models import User, UserRole
     from app.security import hash_password
     import logging
+
     logger = logging.getLogger("linear_health")
 
     try:
         async with async_session() as session:
-            result = await session.execute(select(User).where(User.email == settings.ADMIN_EMAIL))
+            result = await session.execute(
+                select(User).where(User.email == settings.ADMIN_EMAIL)
+            )
             admin = result.scalar_one_or_none()
-            
+
             if not admin:
                 admin = User(
                     email=settings.ADMIN_EMAIL,
@@ -132,19 +265,19 @@ async def init_db():
             else:
                 # Update password if it changed in .env
                 admin.hashed_password = hash_password(settings.ADMIN_PASSWORD)
-                
+
             await seed_data(session)
             await session.commit()
     except Exception as exc:
         logger.warning(
             "Database schema mismatch or outdated columns detected (%s). Re-creating all tables to synchronize schema...",
-            str(exc)
+            str(exc),
         )
         # Drop all tables and recreate them from fresh metadata
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
-            
+
         # Re-seed the admin user after clean table creation
         async with async_session() as session:
             admin = User(
@@ -157,4 +290,6 @@ async def init_db():
             session.add(admin)
             await seed_data(session)
             await session.commit()
-        logger.info("Database schema synchronized and administrator seeded successfully.")
+        logger.info(
+            "Database schema synchronized and administrator seeded successfully."
+        )

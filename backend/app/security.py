@@ -12,8 +12,10 @@ from sqlalchemy import select
 
 # --- Monkeypatch for passlib + bcrypt 4.1.0+ compatibility ---
 if not hasattr(bcrypt, "__about__"):
+
     class About:
         __version__ = bcrypt.__version__
+
     bcrypt.__about__ = About
 
 from app.config import settings
@@ -53,7 +55,9 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         sub = payload.get("sub")
         if sub is None:
             raise credentials_exception
@@ -74,6 +78,7 @@ async def get_current_user(
 async def require_admin(current_user=Depends(get_current_user)):
     """FastAPI dependency: enforce admin role."""
     from app.models import UserRole
+
     if current_user.role != UserRole.admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

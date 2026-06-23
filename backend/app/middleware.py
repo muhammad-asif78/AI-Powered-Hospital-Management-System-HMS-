@@ -18,12 +18,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("X-Request-ID", uuid.uuid4().hex)
 
         # Set contextual information for all logs in this request's lifetime
-        set_log_context({
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "client_ip": request.client.host if request.client else None,
-        })
+        set_log_context(
+            {
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "client_ip": request.client.host if request.client else None,
+            }
+        )
 
         start = time.perf_counter()
         try:

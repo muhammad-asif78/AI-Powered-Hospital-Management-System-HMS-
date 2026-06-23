@@ -35,11 +35,17 @@ async def list_doctors(
             query = query.where(Doctor.specialty.ilike("%Pediatric%"))
         elif "ortho" in spec_lower:
             query = query.where(Doctor.specialty.ilike("%Orthopedic%"))
-        elif "general" in spec_lower or "physician" in spec_lower or "medicine" in spec_lower or "gp" == spec_lower or "checkup" in spec_lower:
+        elif (
+            "general" in spec_lower
+            or "physician" in spec_lower
+            or "medicine" in spec_lower
+            or "gp" == spec_lower
+            or "checkup" in spec_lower
+        ):
             query = query.where(Doctor.specialty.ilike("%General Medicine%"))
         else:
             query = query.where(Doctor.specialty.ilike(f"%{specialty}%"))
-    
+
     search_term = name or search
     if search_term:
         term = search_term.strip()
@@ -53,7 +59,9 @@ async def list_doctors(
 
 
 @router.get("/{doctor_id}", response_model=DoctorResponse)
-async def get_doctor(doctor_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def get_doctor(
+    doctor_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     result = await db.execute(select(Doctor).where(Doctor.id == doctor_id))
     doctor = result.scalar_one_or_none()
     if not doctor:
@@ -63,8 +71,12 @@ async def get_doctor(doctor_id: int, db: AsyncSession = Depends(get_db), _=Depen
 
 @router.post("/add", response_model=DoctorResponse, status_code=201)
 @router.post("/", response_model=DoctorResponse, status_code=201)
-async def create_doctor(data: DoctorCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    existing = await db.execute(select(Doctor).where(Doctor.license_number == data.license_number))
+async def create_doctor(
+    data: DoctorCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    existing = await db.execute(
+        select(Doctor).where(Doctor.license_number == data.license_number)
+    )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="License number already exists")
     doctor = Doctor(**data.model_dump())
@@ -76,7 +88,10 @@ async def create_doctor(data: DoctorCreate, db: AsyncSession = Depends(get_db), 
 
 @router.put("/{doctor_id}", response_model=DoctorResponse)
 async def update_doctor(
-    doctor_id: int, data: DoctorUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    doctor_id: int,
+    data: DoctorUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
     result = await db.execute(select(Doctor).where(Doctor.id == doctor_id))
     doctor = result.scalar_one_or_none()
@@ -90,7 +105,9 @@ async def update_doctor(
 
 
 @router.delete("/{doctor_id}", status_code=204)
-async def delete_doctor(doctor_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def delete_doctor(
+    doctor_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     result = await db.execute(select(Doctor).where(Doctor.id == doctor_id))
     doctor = result.scalar_one_or_none()
     if not doctor:

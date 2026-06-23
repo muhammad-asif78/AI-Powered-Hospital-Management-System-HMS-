@@ -22,7 +22,12 @@ async def list_appointments(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    query = select(Appointment).offset(skip).limit(limit).order_by(Appointment.appointment_date.desc())
+    query = (
+        select(Appointment)
+        .offset(skip)
+        .limit(limit)
+        .order_by(Appointment.appointment_date.desc())
+    )
     if status:
         query = query.where(Appointment.status == AppointmentStatus(status))
     if patient_id:
@@ -34,8 +39,12 @@ async def list_appointments(
 
 
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
-async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(select(Appointment).where(Appointment.id == appointment_id))
+async def get_appointment(
+    appointment_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Appointment).where(Appointment.id == appointment_id)
+    )
     appt = result.scalar_one_or_none()
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
@@ -43,8 +52,13 @@ async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_db
 
 
 @router.post("/", response_model=AppointmentResponse, status_code=201)
-async def create_appointment(data: AppointmentCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def create_appointment(
+    data: AppointmentCreate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
     from sqlalchemy.exc import IntegrityError
+
     try:
         appt = Appointment(**data.model_dump())
         db.add(appt)
@@ -55,7 +69,7 @@ async def create_appointment(data: AppointmentCreate, db: AsyncSession = Depends
         await db.rollback()
         raise HTTPException(
             status_code=400,
-            detail="Invalid Patient ID or Doctor ID. Please ensure they exist in the system."
+            detail="Invalid Patient ID or Doctor ID. Please ensure they exist in the system.",
         )
     except Exception as e:
         await db.rollback()
@@ -64,9 +78,14 @@ async def create_appointment(data: AppointmentCreate, db: AsyncSession = Depends
 
 @router.put("/{appointment_id}", response_model=AppointmentResponse)
 async def update_appointment(
-    appointment_id: int, data: AppointmentUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    appointment_id: int,
+    data: AppointmentUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
-    result = await db.execute(select(Appointment).where(Appointment.id == appointment_id))
+    result = await db.execute(
+        select(Appointment).where(Appointment.id == appointment_id)
+    )
     appt = result.scalar_one_or_none()
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
@@ -78,8 +97,12 @@ async def update_appointment(
 
 
 @router.delete("/{appointment_id}", status_code=204)
-async def delete_appointment(appointment_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(select(Appointment).where(Appointment.id == appointment_id))
+async def delete_appointment(
+    appointment_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Appointment).where(Appointment.id == appointment_id)
+    )
     appt = result.scalar_one_or_none()
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")

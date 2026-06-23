@@ -12,7 +12,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db
 from app.middleware import RequestLoggingMiddleware, GlobalErrorHandlerMiddleware
-from app.routers import auth, patients, doctors, appointments, referrals, prior_auth, users
+from app.routers import (
+    auth,
+    patients,
+    doctors,
+    appointments,
+    referrals,
+    prior_auth,
+    users,
+)
 from app.routers.dashboard import insurance_router, dashboard_router
 from app.routers import livekit_token
 from app.services.redis_service import init_redis, close_redis
@@ -28,6 +36,7 @@ logger = logging.getLogger("linear_health")
 
 
 # ──────────────── Lifespan ────────────────
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -89,6 +98,7 @@ app.include_router(users.router)
 
 
 # ──────────────── Health Check ────────────────
+
 
 @app.get("/api/health", tags=["Health"])
 async def health_check():

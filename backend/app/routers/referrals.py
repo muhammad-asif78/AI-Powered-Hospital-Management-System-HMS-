@@ -5,10 +5,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from app.database import get_db
-from app.models import InboundReferral, OutboundReferral, ReferralStatus, OutboundReferralStatus
+from app.models import (
+    InboundReferral,
+    OutboundReferral,
+    ReferralStatus,
+    OutboundReferralStatus,
+)
 from app.schemas import (
-    InboundReferralCreate, InboundReferralUpdate, InboundReferralResponse,
-    OutboundReferralCreate, OutboundReferralUpdate, OutboundReferralResponse,
+    InboundReferralCreate,
+    InboundReferralUpdate,
+    InboundReferralResponse,
+    OutboundReferralCreate,
+    OutboundReferralUpdate,
+    OutboundReferralResponse,
 )
 from app.security import get_current_user
 from app.services.groq_service import parse_referral_document
@@ -18,6 +27,7 @@ router = APIRouter(prefix="/api/referrals", tags=["Referrals"])
 
 # ──────────────── Inbound Referrals ────────────────
 
+
 @router.get("/inbound", response_model=List[InboundReferralResponse])
 async def list_inbound(
     skip: int = Query(0, ge=0),
@@ -26,7 +36,12 @@ async def list_inbound(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    query = select(InboundReferral).offset(skip).limit(limit).order_by(InboundReferral.created_at.desc())
+    query = (
+        select(InboundReferral)
+        .offset(skip)
+        .limit(limit)
+        .order_by(InboundReferral.created_at.desc())
+    )
     if status:
         query = query.where(InboundReferral.status == ReferralStatus(status))
     result = await db.execute(query)
@@ -34,8 +49,12 @@ async def list_inbound(
 
 
 @router.get("/inbound/{referral_id}", response_model=InboundReferralResponse)
-async def get_inbound(referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(select(InboundReferral).where(InboundReferral.id == referral_id))
+async def get_inbound(
+    referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(InboundReferral).where(InboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Inbound referral not found")
@@ -43,8 +62,13 @@ async def get_inbound(referral_id: int, db: AsyncSession = Depends(get_db), _=De
 
 
 @router.post("/inbound", response_model=InboundReferralResponse, status_code=201)
-async def create_inbound(data: InboundReferralCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def create_inbound(
+    data: InboundReferralCreate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
     from sqlalchemy.exc import IntegrityError
+
     try:
         ref = InboundReferral(**data.model_dump())
 
@@ -62,7 +86,7 @@ async def create_inbound(data: InboundReferralCreate, db: AsyncSession = Depends
         await db.rollback()
         raise HTTPException(
             status_code=400,
-            detail="Invalid Patient ID. Please ensure the patient exists in the system."
+            detail="Invalid Patient ID. Please ensure the patient exists in the system.",
         )
     except Exception as e:
         await db.rollback()
@@ -71,9 +95,14 @@ async def create_inbound(data: InboundReferralCreate, db: AsyncSession = Depends
 
 @router.put("/inbound/{referral_id}", response_model=InboundReferralResponse)
 async def update_inbound(
-    referral_id: int, data: InboundReferralUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    referral_id: int,
+    data: InboundReferralUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
-    result = await db.execute(select(InboundReferral).where(InboundReferral.id == referral_id))
+    result = await db.execute(
+        select(InboundReferral).where(InboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Inbound referral not found")
@@ -85,9 +114,13 @@ async def update_inbound(
 
 
 @router.post("/inbound/{referral_id}/parse", response_model=InboundReferralResponse)
-async def parse_inbound(referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def parse_inbound(
+    referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     """Trigger AI parsing on an existing inbound referral's raw document text."""
-    result = await db.execute(select(InboundReferral).where(InboundReferral.id == referral_id))
+    result = await db.execute(
+        select(InboundReferral).where(InboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Inbound referral not found")
@@ -104,6 +137,7 @@ async def parse_inbound(referral_id: int, db: AsyncSession = Depends(get_db), _=
 
 # ──────────────── Outbound Referrals ────────────────
 
+
 @router.get("/outbound", response_model=List[OutboundReferralResponse])
 async def list_outbound(
     skip: int = Query(0, ge=0),
@@ -112,7 +146,12 @@ async def list_outbound(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    query = select(OutboundReferral).offset(skip).limit(limit).order_by(OutboundReferral.created_at.desc())
+    query = (
+        select(OutboundReferral)
+        .offset(skip)
+        .limit(limit)
+        .order_by(OutboundReferral.created_at.desc())
+    )
     if status:
         query = query.where(OutboundReferral.status == OutboundReferralStatus(status))
     result = await db.execute(query)
@@ -120,8 +159,12 @@ async def list_outbound(
 
 
 @router.get("/outbound/{referral_id}", response_model=OutboundReferralResponse)
-async def get_outbound(referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(select(OutboundReferral).where(OutboundReferral.id == referral_id))
+async def get_outbound(
+    referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(OutboundReferral).where(OutboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Outbound referral not found")
@@ -129,8 +172,13 @@ async def get_outbound(referral_id: int, db: AsyncSession = Depends(get_db), _=D
 
 
 @router.post("/outbound", response_model=OutboundReferralResponse, status_code=201)
-async def create_outbound(data: OutboundReferralCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def create_outbound(
+    data: OutboundReferralCreate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
     from sqlalchemy.exc import IntegrityError
+
     try:
         ref = OutboundReferral(**data.model_dump())
         db.add(ref)
@@ -141,7 +189,7 @@ async def create_outbound(data: OutboundReferralCreate, db: AsyncSession = Depen
         await db.rollback()
         raise HTTPException(
             status_code=400,
-            detail="Invalid Patient ID or Referring Doctor ID. Please ensure they exist in the system."
+            detail="Invalid Patient ID or Referring Doctor ID. Please ensure they exist in the system.",
         )
     except Exception as e:
         await db.rollback()
@@ -150,9 +198,14 @@ async def create_outbound(data: OutboundReferralCreate, db: AsyncSession = Depen
 
 @router.put("/outbound/{referral_id}", response_model=OutboundReferralResponse)
 async def update_outbound(
-    referral_id: int, data: OutboundReferralUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    referral_id: int,
+    data: OutboundReferralUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
-    result = await db.execute(select(OutboundReferral).where(OutboundReferral.id == referral_id))
+    result = await db.execute(
+        select(OutboundReferral).where(OutboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Outbound referral not found")
@@ -164,9 +217,13 @@ async def update_outbound(
 
 
 @router.post("/outbound/{referral_id}/verify", response_model=OutboundReferralResponse)
-async def verify_outbound(referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def verify_outbound(
+    referral_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     """Verify insurance acceptance and specialty match for an outbound referral."""
-    result = await db.execute(select(OutboundReferral).where(OutboundReferral.id == referral_id))
+    result = await db.execute(
+        select(OutboundReferral).where(OutboundReferral.id == referral_id)
+    )
     ref = result.scalar_one_or_none()
     if not ref:
         raise HTTPException(status_code=404, detail="Outbound referral not found")

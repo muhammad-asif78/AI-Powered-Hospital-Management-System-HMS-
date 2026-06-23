@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "hospital_management"
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: str = "postgresql+asyncpg://linearhealth:linearhealth_secret@postgres:5432/hospital_management"
+    DATABASE_URL: str = (
+        "postgresql+asyncpg://linearhealth:linearhealth_secret@postgres:5432/hospital_management"
+    )
 
     # --- Redis ---
     REDIS_URL: str = "redis://redis:6379/0"

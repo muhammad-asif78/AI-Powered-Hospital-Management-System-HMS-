@@ -20,7 +20,9 @@ async def list_patients(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_user),
 ):
-    query = select(Patient).offset(skip).limit(limit).order_by(Patient.created_at.desc())
+    query = (
+        select(Patient).offset(skip).limit(limit).order_by(Patient.created_at.desc())
+    )
     if search:
         search_clean = search.strip()
         query = query.where(
@@ -34,13 +36,17 @@ async def list_patients(
 
 
 @router.get("/count")
-async def count_patients(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def count_patients(
+    db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     result = await db.execute(select(func.count(Patient.id)))
     return {"count": result.scalar()}
 
 
 @router.get("/{patient_id}", response_model=PatientResponse)
-async def get_patient(patient_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def get_patient(
+    patient_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalar_one_or_none()
     if not patient:
@@ -49,13 +55,19 @@ async def get_patient(patient_id: int, db: AsyncSession = Depends(get_db), _=Dep
 
 
 @router.post("/", response_model=PatientResponse, status_code=201)
-async def create_patient(data: PatientCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def create_patient(
+    data: PatientCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     # Check for duplicate MRN
     existing = await db.execute(
-        select(Patient).where(Patient.medical_record_number == data.medical_record_number)
+        select(Patient).where(
+            Patient.medical_record_number == data.medical_record_number
+        )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Medical record number already exists")
+        raise HTTPException(
+            status_code=400, detail="Medical record number already exists"
+        )
 
     # Check for duplicate email
     if data.email:
@@ -74,7 +86,10 @@ async def create_patient(data: PatientCreate, db: AsyncSession = Depends(get_db)
 
 @router.put("/{patient_id}", response_model=PatientResponse)
 async def update_patient(
-    patient_id: int, data: PatientUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+    patient_id: int,
+    data: PatientUpdate,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
 ):
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalar_one_or_none()
@@ -89,7 +104,9 @@ async def update_patient(
 
 
 @router.delete("/{patient_id}", status_code=204)
-async def delete_patient(patient_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+async def delete_patient(
+    patient_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)
+):
     result = await db.execute(select(Patient).where(Patient.id == patient_id))
     patient = result.scalar_one_or_none()
     if not patient:

@@ -8,8 +8,17 @@ Tables: users, patients, doctors, insurance_providers, patient_insurance,
 
 import enum
 from sqlalchemy import (
-    Column, Integer, String, Text, Boolean, Date, DateTime,
-    ForeignKey, Enum, JSON, Float,
+    Column,
+    Integer,
+    String,
+    Text,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Enum,
+    JSON,
+    Float,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -17,6 +26,7 @@ from app.database import Base
 
 
 # ──────────────────── Enums ────────────────────
+
 
 class UserRole(str, enum.Enum):
     admin = "admin"
@@ -69,6 +79,7 @@ class CallType(str, enum.Enum):
 
 # ──────────────────── Core Tables ────────────────────
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -84,9 +95,13 @@ class User(Base):
     two_factor_enabled = Column(Boolean, default=False)
     session_autolock = Column(Boolean, default=False)
     preferences = Column(JSON, nullable=True)
-    billing_plan = Column(String(255), nullable=True, default="Enterprise Clinical Plan")
+    billing_plan = Column(
+        String(255), nullable=True, default="Enterprise Clinical Plan"
+    )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     # 1:1 relationship
     doctor_profile = relationship("Doctor", back_populates="user", uselist=False)
@@ -105,10 +120,14 @@ class Patient(Base):
     address = Column(Text)
     medical_record_number = Column(String(50), unique=True, nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     # 1:N relationships
-    insurance_records = relationship("PatientInsurance", back_populates="patient", cascade="all, delete-orphan")
+    insurance_records = relationship(
+        "PatientInsurance", back_populates="patient", cascade="all, delete-orphan"
+    )
     appointments = relationship("Appointment", back_populates="patient")
     inbound_referrals = relationship("InboundReferral", back_populates="patient")
     outbound_referrals = relationship("OutboundReferral", back_populates="patient")
@@ -135,12 +154,17 @@ class Doctor(Base):
     # Relationships
     user = relationship("User", back_populates="doctor_profile")
     appointments = relationship("Appointment", back_populates="doctor")
-    outbound_referrals = relationship("OutboundReferral", back_populates="referring_doctor")
-    assigned_inbound_referrals = relationship("InboundReferral", back_populates="assigned_doctor")
+    outbound_referrals = relationship(
+        "OutboundReferral", back_populates="referring_doctor"
+    )
+    assigned_inbound_referrals = relationship(
+        "InboundReferral", back_populates="assigned_doctor"
+    )
     prior_authorizations = relationship("PriorAuthorization", back_populates="doctor")
 
 
 # ──────────────────── Insurance Tables ────────────────────
+
 
 class InsuranceProvider(Base):
     __tablename__ = "insurance_providers"
@@ -152,17 +176,24 @@ class InsuranceProvider(Base):
     contact_email = Column(String(255))
     is_active = Column(Boolean, default=True)
 
-    patient_records = relationship("PatientInsurance", back_populates="insurance_provider")
-    prior_authorizations = relationship("PriorAuthorization", back_populates="insurance_provider")
+    patient_records = relationship(
+        "PatientInsurance", back_populates="insurance_provider"
+    )
+    prior_authorizations = relationship(
+        "PriorAuthorization", back_populates="insurance_provider"
+    )
 
 
 class PatientInsurance(Base):
     """Junction-style table linking patients to their insurance coverage."""
+
     __tablename__ = "patient_insurance"
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    insurance_provider_id = Column(Integer, ForeignKey("insurance_providers.id"), nullable=False)
+    insurance_provider_id = Column(
+        Integer, ForeignKey("insurance_providers.id"), nullable=False
+    )
     policy_number = Column(String(100), nullable=False)
     group_number = Column(String(100))
     subscriber_name = Column(String(255))
@@ -171,13 +202,17 @@ class PatientInsurance(Base):
     expiration_date = Column(Date)
 
     patient = relationship("Patient", back_populates="insurance_records")
-    insurance_provider = relationship("InsuranceProvider", back_populates="patient_records")
+    insurance_provider = relationship(
+        "InsuranceProvider", back_populates="patient_records"
+    )
 
 
 # ──────────────────── Appointment (N:M Junction) ────────────────────
 
+
 class Appointment(Base):
     """Many-to-Many junction table linking patients and doctors."""
+
     __tablename__ = "appointments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -196,6 +231,7 @@ class Appointment(Base):
 
 # ──────────────────── Referral Workflow Tables ────────────────────
 
+
 class InboundReferral(Base):
     __tablename__ = "inbound_referrals"
 
@@ -213,10 +249,14 @@ class InboundReferral(Base):
     assigned_doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=True)
     insurance_verified = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     patient = relationship("Patient", back_populates="inbound_referrals")
-    assigned_doctor = relationship("Doctor", back_populates="assigned_inbound_referrals")
+    assigned_doctor = relationship(
+        "Doctor", back_populates="assigned_inbound_referrals"
+    )
 
 
 class OutboundReferral(Base):
@@ -235,7 +275,9 @@ class OutboundReferral(Base):
     specialty_match = Column(Boolean)
     status = Column(Enum(OutboundReferralStatus), default=OutboundReferralStatus.draft)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     patient = relationship("Patient", back_populates="outbound_referrals")
     referring_doctor = relationship("Doctor", back_populates="outbound_referrals")
@@ -243,13 +285,16 @@ class OutboundReferral(Base):
 
 # ──────────────────── Prior Authorization ────────────────────
 
+
 class PriorAuthorization(Base):
     __tablename__ = "prior_authorizations"
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
     doctor_id = Column(Integer, ForeignKey("doctors.id"), nullable=False)
-    insurance_provider_id = Column(Integer, ForeignKey("insurance_providers.id"), nullable=False)
+    insurance_provider_id = Column(
+        Integer, ForeignKey("insurance_providers.id"), nullable=False
+    )
     procedure_code = Column(String(20), nullable=False)
     procedure_description = Column(Text, nullable=False)
     diagnosis_code = Column(String(20), nullable=False)
@@ -262,14 +307,19 @@ class PriorAuthorization(Base):
     auth_number = Column(String(50))
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     patient = relationship("Patient", back_populates="prior_authorizations")
     doctor = relationship("Doctor", back_populates="prior_authorizations")
-    insurance_provider = relationship("InsuranceProvider", back_populates="prior_authorizations")
+    insurance_provider = relationship(
+        "InsuranceProvider", back_populates="prior_authorizations"
+    )
 
 
 # ──────────────────── Contact Center Logs ────────────────────
+
 
 class ContactCenterLog(Base):
     __tablename__ = "contact_center_logs"

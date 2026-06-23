@@ -3,22 +3,25 @@ Pydantic schemas for request/response validation — Linear Health HMS.
 """
 
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List, Any
+from typing import Optional, Any
 from datetime import date, datetime
 from enum import Enum
 
 
 # ──────────────────── Enums ────────────────────
 
+
 class UserRoleEnum(str, Enum):
     admin = "admin"
     doctor = "doctor"
     staff = "staff"
 
+
 class GenderEnum(str, Enum):
     male = "male"
     female = "female"
     other = "other"
+
 
 class AppointmentStatusEnum(str, Enum):
     scheduled = "scheduled"
@@ -26,11 +29,13 @@ class AppointmentStatusEnum(str, Enum):
     cancelled = "cancelled"
     no_show = "no_show"
 
+
 class ReferralStatusEnum(str, Enum):
     pending = "pending"
     processing = "processing"
     accepted = "accepted"
     rejected = "rejected"
+
 
 class OutboundReferralStatusEnum(str, Enum):
     draft = "draft"
@@ -40,6 +45,7 @@ class OutboundReferralStatusEnum(str, Enum):
     accepted = "accepted"
     rejected = "rejected"
 
+
 class PriorAuthStatusEnum(str, Enum):
     draft = "draft"
     submitted = "submitted"
@@ -48,6 +54,7 @@ class PriorAuthStatusEnum(str, Enum):
     denied = "denied"
     appeal = "appeal"
 
+
 class CallTypeEnum(str, Enum):
     inbound = "inbound"
     outbound = "outbound"
@@ -55,15 +62,18 @@ class CallTypeEnum(str, Enum):
 
 # ──────────────────── Auth ────────────────────
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     full_name: str
     role: UserRoleEnum = UserRoleEnum.staff
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class UserResponse(BaseModel):
     id: int
@@ -79,8 +89,10 @@ class UserResponse(BaseModel):
     preferences: Optional[Any] = None
     billing_plan: Optional[str] = "Enterprise Clinical Plan"
     created_at: datetime
+
     class Config:
         from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
@@ -89,6 +101,7 @@ class Token(BaseModel):
 
 
 # ──────────────────── Patient ────────────────────
+
 
 class PatientCreate(BaseModel):
     first_name: str
@@ -100,6 +113,7 @@ class PatientCreate(BaseModel):
     address: Optional[str] = None
     medical_record_number: str
 
+
 class PatientUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -108,6 +122,7 @@ class PatientUpdate(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+
 
 class PatientResponse(BaseModel):
     id: int
@@ -120,11 +135,13 @@ class PatientResponse(BaseModel):
     address: Optional[str]
     medical_record_number: str
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Doctor ────────────────────
+
 
 class DoctorCreate(BaseModel):
     first_name: str
@@ -138,6 +155,7 @@ class DoctorCreate(BaseModel):
     available_timings: Optional[str] = None
     fees: Optional[float] = None
 
+
 class DoctorUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -147,6 +165,7 @@ class DoctorUpdate(BaseModel):
     is_accepting_patients: Optional[bool] = None
     available_timings: Optional[str] = None
     fees: Optional[float] = None
+
 
 class DoctorResponse(BaseModel):
     id: int
@@ -160,17 +179,20 @@ class DoctorResponse(BaseModel):
     created_at: datetime
     available_timings: Optional[str] = None
     fees: Optional[float] = None
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Insurance ────────────────────
 
+
 class InsuranceProviderCreate(BaseModel):
     name: str
     plan_type: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[EmailStr] = None
+
 
 class InsuranceProviderResponse(BaseModel):
     id: int
@@ -179,8 +201,10 @@ class InsuranceProviderResponse(BaseModel):
     contact_phone: Optional[str]
     contact_email: Optional[str]
     is_active: bool
+
     class Config:
         from_attributes = True
+
 
 class PatientInsuranceCreate(BaseModel):
     patient_id: int
@@ -192,6 +216,7 @@ class PatientInsuranceCreate(BaseModel):
     effective_date: Optional[date] = None
     expiration_date: Optional[date] = None
 
+
 class PatientInsuranceResponse(BaseModel):
     id: int
     patient_id: int
@@ -202,11 +227,13 @@ class PatientInsuranceResponse(BaseModel):
     is_primary: bool
     effective_date: Optional[date]
     expiration_date: Optional[date]
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Appointment ────────────────────
+
 
 class AppointmentCreate(BaseModel):
     patient_id: int
@@ -216,12 +243,14 @@ class AppointmentCreate(BaseModel):
     reason: Optional[str] = None
     notes: Optional[str] = None
 
+
 class AppointmentUpdate(BaseModel):
     appointment_date: Optional[datetime] = None
     duration_minutes: Optional[int] = None
     status: Optional[AppointmentStatusEnum] = None
     reason: Optional[str] = None
     notes: Optional[str] = None
+
 
 class AppointmentResponse(BaseModel):
     id: int
@@ -233,11 +262,13 @@ class AppointmentResponse(BaseModel):
     reason: Optional[str]
     notes: Optional[str]
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Inbound Referral ────────────────────
+
 
 class InboundReferralCreate(BaseModel):
     referring_provider_name: str
@@ -250,11 +281,13 @@ class InboundReferralCreate(BaseModel):
     patient_id: Optional[int] = None
     assigned_doctor_id: Optional[int] = None
 
+
 class InboundReferralUpdate(BaseModel):
     status: Optional[ReferralStatusEnum] = None
     patient_id: Optional[int] = None
     assigned_doctor_id: Optional[int] = None
     insurance_verified: Optional[bool] = None
+
 
 class InboundReferralResponse(BaseModel):
     id: int
@@ -271,11 +304,13 @@ class InboundReferralResponse(BaseModel):
     assigned_doctor_id: Optional[int]
     insurance_verified: bool
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Outbound Referral ────────────────────
+
 
 class OutboundReferralCreate(BaseModel):
     patient_id: int
@@ -287,10 +322,12 @@ class OutboundReferralCreate(BaseModel):
     reason: str
     clinical_summary: Optional[str] = None
 
+
 class OutboundReferralUpdate(BaseModel):
     status: Optional[OutboundReferralStatusEnum] = None
     insurance_accepted: Optional[bool] = None
     specialty_match: Optional[bool] = None
+
 
 class OutboundReferralResponse(BaseModel):
     id: int
@@ -306,11 +343,13 @@ class OutboundReferralResponse(BaseModel):
     specialty_match: Optional[bool]
     status: str
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Prior Authorization ────────────────────
+
 
 class PriorAuthCreate(BaseModel):
     patient_id: int
@@ -321,11 +360,13 @@ class PriorAuthCreate(BaseModel):
     diagnosis_code: str
     clinical_justification: Optional[str] = None
 
+
 class PriorAuthUpdate(BaseModel):
     status: Optional[PriorAuthStatusEnum] = None
     clinical_justification: Optional[str] = None
     auth_number: Optional[str] = None
     notes: Optional[str] = None
+
 
 class PriorAuthResponse(BaseModel):
     id: int
@@ -344,16 +385,19 @@ class PriorAuthResponse(BaseModel):
     auth_number: Optional[str]
     notes: Optional[str]
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Contact Center ────────────────────
 
+
 class ContactCenterLogCreate(BaseModel):
     patient_id: Optional[int] = None
     call_type: CallTypeEnum
     caller_phone: Optional[str] = None
+
 
 class ContactCenterLogResponse(BaseModel):
     id: int
@@ -369,11 +413,13 @@ class ContactCenterLogResponse(BaseModel):
     action_taken: Optional[str]
     escalated_to_human: bool
     created_at: datetime
+
     class Config:
         from_attributes = True
 
 
 # ──────────────────── Dashboard ────────────────────
+
 
 class DashboardStats(BaseModel):
     total_patients: int

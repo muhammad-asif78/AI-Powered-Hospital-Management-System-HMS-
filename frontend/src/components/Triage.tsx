@@ -89,22 +89,23 @@ export default function Triage({ onFastTrackAppointment }: TriageProps) {
       clearInterval(interval);
       
       let urgency: "Routine" | "Urgent" | "Critical" = "Routine";
-      let department: Specialty = "General Practice";
+      let department: Specialty = Specialty.GENERAL_MEDICINE;
       
       const lowerQuery = query.toLowerCase();
       if (lowerQuery.includes("chest") || lowerQuery.includes("heart") || lowerQuery.includes("breath")) {
         urgency = "Critical";
-        department = "Cardiology";
+        department = Specialty.CARDIOLOGY;
       } else if (lowerQuery.includes("fever") && lowerQuery.includes("child")) {
         urgency = "Urgent";
-        department = "Pediatrics";
+        department = Specialty.PEDIATRICS;
       } else if (lowerQuery.includes("ankle") || lowerQuery.includes("bone") || lowerQuery.includes("trauma")) {
         urgency = "Urgent";
-        department = "Orthopedics";
+        department = Specialty.ORTHOPEDICS;
       } else if (lowerQuery.includes("brain") || lowerQuery.includes("headache")) {
         urgency = "Critical";
-        department = "Neurology";
+        department = Specialty.NEUROLOGY;
       }
+
 
       setResult({
         urgency,

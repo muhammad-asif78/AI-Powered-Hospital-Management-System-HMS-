@@ -5,7 +5,6 @@ from app.logging_utils import (
     StructuredJSONFormatter,
     set_log_context,
     clear_log_context,
-    LOG_CONTEXT,
 )
 
 

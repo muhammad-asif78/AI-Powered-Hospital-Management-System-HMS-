@@ -113,7 +113,9 @@ def setup_structured_logging(log_level: int = logging.INFO):
         lib_logger.propagate = True
         lib_logger.handlers = []
 
-    logging.getLogger("linear_health").info("Structured JSON logging system initialized.")
+    logging.getLogger("linear_health").info(
+        "Structured JSON logging system initialized."
+    )
 
 
 # Context Managers/Helpers for ContextVar modification
