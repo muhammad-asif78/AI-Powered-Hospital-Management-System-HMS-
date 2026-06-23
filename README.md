@@ -1,13 +1,3 @@
----
-title: Hospital Backend
-emoji: 🏥
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 8000
-pinned: false
----
-
 # 🏥 Linear Health — AI-Powered Hospital Management System (HMS)
 
 
