@@ -64,7 +64,10 @@ async def upload_avatar(
 ):
     """Handle user workstation photo uploads via multipart/form-data."""
     # Ensure static directory exists
-    os.makedirs("static/avatars", exist_ok=True)
+    try:
+        os.makedirs("static/avatars", exist_ok=True)
+    except OSError:
+        pass
 
     # Save the file locally
     file_ext = os.path.splitext(file.filename)[1]

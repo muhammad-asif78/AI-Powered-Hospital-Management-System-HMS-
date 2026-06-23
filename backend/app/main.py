@@ -43,7 +43,12 @@ logger = logging.getLogger("linear_health")
 async def lifespan(app: FastAPI):
     """Startup: create DB tables + Redis. Shutdown: cleanup."""
     logger.info("Starting %s (%s)", settings.APP_NAME, settings.APP_ENV)
-    os.makedirs("static/avatars", exist_ok=True)
+    try:
+        os.makedirs("static/avatars", exist_ok=True)
+    except OSError:
+        logger.warning(
+            "Failed to create static/avatars directory. Read-only filesystem."
+        )
     await init_db()
     logger.info("Database tables initialized")
     await init_redis()
@@ -83,7 +88,10 @@ app.add_middleware(
 # ──────────────── Register Routers ────────────────
 
 # Mount static files for user profile images
-os.makedirs("static/avatars", exist_ok=True)
+try:
+    os.makedirs("static/avatars", exist_ok=True)
+except OSError:
+    pass
 app.mount("/api/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth.router)
