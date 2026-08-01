@@ -49,12 +49,22 @@ async def lifespan(app: FastAPI):
         logger.warning(
             "Failed to create static/avatars directory. Read-only filesystem."
         )
-    await init_db()
-    logger.info("Database tables initialized")
-    await init_redis()
+    try:
+        await init_db()
+        logger.info("Database tables initialized")
+    except Exception as exc:
+        logger.error("Database connection failed during startup: %s", exc)
+    try:
+        await init_redis()
+    except Exception as exc:
+        logger.error("Redis connection failed during startup: %s", exc)
     yield
-    await close_redis()
+    try:
+        await close_redis()
+    except Exception:
+        pass
     logger.info("Shutting down %s", settings.APP_NAME)
+
 
 
 # ──────────────── App Instance ────────────────
