@@ -7,16 +7,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 from app.main import app
 
 class VercelPathFixMiddleware:
-    """Ensures ASGI path includes /api prefix regardless of Vercel serverless routing strip."""
+    """Normalizes Vercel ASGI scope path so FastAPI routing matches consistently."""
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            path = scope.get("path", "")
-            if not path.startswith("/api"):
-                scope["path"] = "/api" + (path if path.startswith("/") else "/" + path)
+            raw_path = scope.get("path", "")
+            # Strip Vercel entrypoint file name if included in ASGI path
+            clean_path = raw_path.replace("/api/index.py", "").replace("/api/index", "")
+            if not clean_path or clean_path == "/":
+                clean_path = "/api"
+            elif not clean_path.startswith("/api"):
+                clean_path = "/api" + (clean_path if clean_path.startswith("/") else "/" + clean_path)
+            
+            scope["path"] = clean_path
+            # Set root_path to empty so FastAPI matches path directly
+            scope["root_path"] = ""
         await self.app(scope, receive, send)
 
-# Vercel entrypoint can expose app directly or wrapped
 app = VercelPathFixMiddleware(app)

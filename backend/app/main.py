@@ -122,6 +122,8 @@ app.include_router(users.router)
 # ──────────────── Health Check & SPA Fallback ────────────────
 
 
+@app.get("/api", tags=["Health"])
+@app.get("/api/", tags=["Health"])
 @app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
 async def health_check():
@@ -144,5 +146,6 @@ async def serve_spa_fallback(full_path: str):
     if os.path.exists(index_path):
         return FileResponse(index_path)
     return {"status": "healthy", "service": settings.APP_NAME}
+
 
 
