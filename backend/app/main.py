@@ -122,12 +122,26 @@ app.include_router(users.router)
 # ──────────────── Health Check ────────────────
 
 
+from fastapi import Request
+
 @app.get("/api", tags=["Health"])
 @app.get("/api/", tags=["Health"])
 @app.get("/health", tags=["Health"])
 @app.get("/api/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy", "service": settings.APP_NAME}
+
+@app.get("/api/debug", tags=["Health"])
+async def debug_info(request: Request):
+    routes = [getattr(r, "path", str(r)) for r in app.routes]
+    return {
+        "url": str(request.url),
+        "path": request.url.path,
+        "headers": dict(request.headers),
+        "routes": routes,
+    }
+
+
 
 
 
