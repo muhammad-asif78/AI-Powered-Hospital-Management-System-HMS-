@@ -95,27 +95,48 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def normalize_vercel_path(request, call_next):
-    path_param = request.query_params.get("path")
-    if path_param:
-        target_path = path_param
-    else:
-        raw_path = request.scope.get("path", "")
-        headers = dict(request.scope.get("headers", []))
-        x_matched = headers.get(b"x-matched-path", b"").decode("utf-8")
-        target_path = x_matched if x_matched else raw_path
+from urllib.parse import parse_qs
 
-    clean_path = target_path.split("?")[0].replace("/api/index.py", "").replace("/api/index", "")
-    
-    if not clean_path or clean_path == "/":
-        clean_path = "/api/health"
-    elif not clean_path.startswith("/api"):
-        clean_path = "/api" + (clean_path if clean_path.startswith("/") else "/" + clean_path)
-        
-    request.scope["path"] = clean_path
-    response = await call_next(request)
-    return response
+
+class VercelASGIMiddleware:
+    """Outermost ASGI Middleware: normalizes request scope['path'] BEFORE FastAPI route resolution."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            query_string = scope.get("query_string", b"").decode("utf-8")
+            parsed_qs = parse_qs(query_string)
+            path_param = parsed_qs.get("path", [None])[0]
+
+            headers = dict(scope.get("headers", []))
+            x_matched = headers.get(b"x-matched-path", b"").decode("utf-8")
+            raw_path = scope.get("path", "")
+
+            target_path = (
+                path_param if path_param else (x_matched if x_matched else raw_path)
+            )
+            clean_path = (
+                target_path.split("?")[0]
+                .replace("/api/index.py", "")
+                .replace("/api/index", "")
+            )
+
+            if not clean_path or clean_path == "/":
+                clean_path = "/api/health"
+            elif not clean_path.startswith("/api"):
+                clean_path = "/api" + (
+                    clean_path if clean_path.startswith("/") else "/" + clean_path
+                )
+
+            scope["path"] = clean_path
+            scope["raw_path"] = clean_path.encode("utf-8")
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(VercelASGIMiddleware)
+
 
 
 
