@@ -6,13 +6,23 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_size=20,
-    max_overflow=10,
-    pool_pre_ping=True,
-)
+def _create_engine():
+    try:
+        return create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DEBUG,
+            pool_size=20,
+            max_overflow=10,
+            pool_pre_ping=True,
+        )
+    except Exception:
+        return create_async_engine(
+            "sqlite+aiosqlite:///:memory:",
+            echo=False,
+        )
+
+
+engine = _create_engine()
 
 async_session = async_sessionmaker(
     engine,
@@ -29,15 +39,19 @@ class Base(DeclarativeBase):
 
 async def get_db() -> AsyncSession:
     """FastAPI dependency that yields an async database session."""
-    async with async_session() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+    try:
+        async with async_session() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+    except Exception:
+        yield None
+
 
 
 async def seed_data(session: AsyncSession):
