@@ -119,7 +119,7 @@ app.include_router(livekit_token.router)
 app.include_router(users.router)
 
 
-# ──────────────── Health Check & SPA Fallback ────────────────
+# ──────────────── Health Check ────────────────
 
 
 @app.get("/api", tags=["Health"])
@@ -129,23 +129,6 @@ app.include_router(users.router)
 async def health_check():
     return {"status": "healthy", "service": settings.APP_NAME}
 
-
-@app.get("/")
-async def root():
-    index_path = os.path.join(frontend_dist, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"status": "healthy", "service": settings.APP_NAME}
-
-
-@app.get("/{full_path:path}")
-async def serve_spa_fallback(full_path: str):
-    if full_path.startswith("api/") or full_path.startswith("/api/"):
-        return {"detail": "Not Found"}
-    index_path = os.path.join(frontend_dist, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"status": "healthy", "service": settings.APP_NAME}
 
 
 
