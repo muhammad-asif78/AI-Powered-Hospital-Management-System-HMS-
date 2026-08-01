@@ -97,12 +97,15 @@ app.add_middleware(
 
 # ──────────────── Register Routers ────────────────
 
-# Mount static files for user profile images
-try:
-    os.makedirs("static/avatars", exist_ok=True)
-except OSError:
-    pass
-app.mount("/api/static", StaticFiles(directory="static"), name="static")
+import os
+from fastapi.responses import RedirectResponse, FileResponse
+
+frontend_dist = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+)
+assets_dir = os.path.join(frontend_dist, "assets")
+if os.path.exists(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="frontend_assets")
 
 app.include_router(auth.router)
 app.include_router(patients.router)
@@ -116,7 +119,7 @@ app.include_router(livekit_token.router)
 app.include_router(users.router)
 
 
-# ──────────────── Health Check ────────────────
+# ──────────────── Health Check & SPA Fallback ────────────────
 
 
 @app.get("/api/health", tags=["Health"])
@@ -126,4 +129,18 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/docs")
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "healthy", "service": settings.APP_NAME}
+
+
+@app.get("/{full_path:path}")
+async def serve_spa_fallback(full_path: str):
+    if full_path.startswith("api/"):
+        return {"detail": "Not Found"}
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "healthy", "service": settings.APP_NAME}
+
