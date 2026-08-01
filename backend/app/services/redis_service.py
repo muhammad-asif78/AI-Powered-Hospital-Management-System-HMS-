@@ -1,17 +1,25 @@
-"""Redis caching service for fast data retrieval."""
-
 import json
 import logging
-import redis.asyncio as aioredis
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None
+
 from app.config import settings
 
 logger = logging.getLogger("linear_health.redis")
 
-redis_client: aioredis.Redis | None = None
+
+redis_client = None
 
 
 async def init_redis():
     global redis_client
+    if aioredis is None:
+        logger.warning("Redis library not installed — caching disabled")
+        redis_client = None
+        return
     try:
         redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         await redis_client.ping()  # type: ignore
@@ -19,6 +27,7 @@ async def init_redis():
     except Exception as e:
         logger.warning("Redis unavailable (%s) — caching disabled", e)
         redis_client = None
+
 
 
 async def close_redis():
