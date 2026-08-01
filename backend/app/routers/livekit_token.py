@@ -4,9 +4,13 @@ import logging
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-# pyrefly: ignore [missing-import]
-from livekit import api as lk_api
+try:
+    from livekit import api as lk_api
+except ImportError:
+    lk_api = None
+
 from app.config import settings
+
 
 logger = logging.getLogger("linear_health.livekit")
 router = APIRouter(prefix="/api/livekit", tags=["LiveKit"])
@@ -23,6 +27,8 @@ _dispatched_rooms = set()
 @router.post("/token")
 async def create_livekit_token(req: TokenRequest):
     """Create a LiveKit room with agent dispatch, then return a participant token."""
+    if lk_api is None:
+        return {"error": "LiveKit library unavailable", "token": "", "url": settings.LIVEKIT_URL}
 
     try:
         # 1. Create the room via LiveKit Server API and request agent dispatch
@@ -64,3 +70,4 @@ async def create_livekit_token(req: TokenRequest):
     token.with_grants(lk_api.VideoGrants(room_join=True, room=req.room_name))
 
     return {"token": token.to_jwt(), "url": settings.LIVEKIT_URL}
+

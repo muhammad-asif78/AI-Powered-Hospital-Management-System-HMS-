@@ -6,18 +6,26 @@ prior authorization classification, and conversational logic.
 import json
 import logging
 from typing import Optional
-from groq import Groq
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
 from app.config import settings
 
 logger = logging.getLogger("linear_health.groq")
 
 
-def _get_client() -> Optional[Groq]:
+def _get_client() -> Optional[object]:
     """Returns a Groq client if API key is configured."""
+    if Groq is None:
+        logger.warning("Groq library not installed — AI features disabled")
+        return None
     if not settings.GROQ_API_KEY or settings.GROQ_API_KEY == "your_groq_api_key_here":
         logger.warning("Groq API key not configured — AI features disabled")
         return None
     return Groq(api_key=settings.GROQ_API_KEY)
+
 
 
 async def parse_referral_document(raw_text: str) -> dict:
