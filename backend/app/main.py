@@ -97,11 +97,15 @@ app.add_middleware(
 
 @app.middleware("http")
 async def normalize_vercel_path(request, call_next):
-    path = request.scope.get("path", "")
-    headers = dict(request.scope.get("headers", []))
-    x_forwarded_uri = headers.get(b"x-forwarded-uri", b"").decode("utf-8")
-    
-    target_path = x_forwarded_uri if x_forwarded_uri else path
+    path_param = request.query_params.get("path")
+    if path_param:
+        target_path = path_param
+    else:
+        raw_path = request.scope.get("path", "")
+        headers = dict(request.scope.get("headers", []))
+        x_matched = headers.get(b"x-matched-path", b"").decode("utf-8")
+        target_path = x_matched if x_matched else raw_path
+
     clean_path = target_path.split("?")[0].replace("/api/index.py", "").replace("/api/index", "")
     
     if not clean_path or clean_path == "/":
@@ -112,6 +116,7 @@ async def normalize_vercel_path(request, call_next):
     request.scope["path"] = clean_path
     response = await call_next(request)
     return response
+
 
 
 
