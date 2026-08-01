@@ -4,33 +4,32 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-# --- Monkeypatch for passlib + bcrypt 4.1.0+ compatibility ---
-if not hasattr(bcrypt, "__about__"):
-
-    class About:
-        __version__ = bcrypt.__version__
-
-    bcrypt.__about__ = About
-
 from app.config import settings
 from app.database import get_db
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """Hash password directly using bcrypt without passlib monkeypatching issues."""
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify plain password against hashed password cleanly."""
+    try:
+        pwd_bytes = plain_password.encode("utf-8")[:72]
+        hash_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -66,6 +65,9 @@ async def get_current_user(
         except (ValueError, TypeError):
             raise credentials_exception
     except JWTError:
+        raise credentials_exception
+
+    if db is None:
         raise credentials_exception
 
     result = await db.execute(select(User).where(User.id == user_id))
