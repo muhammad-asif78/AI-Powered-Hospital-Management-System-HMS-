@@ -95,6 +95,26 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def normalize_vercel_path(request, call_next):
+    path = request.scope.get("path", "")
+    headers = dict(request.scope.get("headers", []))
+    x_forwarded_uri = headers.get(b"x-forwarded-uri", b"").decode("utf-8")
+    
+    target_path = x_forwarded_uri if x_forwarded_uri else path
+    clean_path = target_path.split("?")[0].replace("/api/index.py", "").replace("/api/index", "")
+    
+    if not clean_path or clean_path == "/":
+        clean_path = "/api/health"
+    elif not clean_path.startswith("/api"):
+        clean_path = "/api" + (clean_path if clean_path.startswith("/") else "/" + clean_path)
+        
+    request.scope["path"] = clean_path
+    response = await call_next(request)
+    return response
+
+
+
 # ──────────────── Register Routers ────────────────
 
 import os
